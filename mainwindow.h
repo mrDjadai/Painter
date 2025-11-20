@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 #include "CommandSystem.h"
+#include "LayerManager.h"
+#include "LayerView.h"
+#include "LayerWidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -14,6 +17,7 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -23,7 +27,14 @@ private:
     void SetShortcuts();
     void HandleUndo();
     void HandleRedo();
+    void InitializeLayers();
+    void SetupLayerUI();
+    void SetupLayerDockWidget();
 
-    CommandManager commandManager;
+    CommandManager *commandManager;
+    LayerManager *layerManager;
+    LayerView* layerView;
+    LayerWidget* layerWidget;
+    void onLayersChanged();
 };
 #endif // MAINWINDOW_H

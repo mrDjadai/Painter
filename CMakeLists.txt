@@ -25,6 +25,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         CommandSystem.cpp
         CommandSystem.h
+        Layer.h
+        LayerManager.h
+        LayerWidget.h
+        LayerView.h
+        Layer.cpp
+        LayerManager.cpp
+        LayerView.cpp
+        LayerWidget.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Painter APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
