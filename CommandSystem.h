@@ -2,7 +2,6 @@
 #define COMMANDSYSTEM_H
 
 #include <vector>
-#include <memory>
 
 class Command
 {
@@ -16,12 +15,12 @@ public:
 class CommandManager
 {
 private:
-    std::vector<std::unique_ptr<Command>> undoStack;
-    std::vector<std::unique_ptr<Command>> redoStack;
+    std::vector<Command*> undoStack;
+    std::vector<Command*> redoStack;
     size_t maxStackSize = 20;
 
 public:
-    void ExecuteCommand(std::unique_ptr<Command> command);
+    void ExecuteCommand(Command* command);
     bool Undo();
     bool Redo();
     bool CanUndo();

@@ -176,6 +176,22 @@ bool LayerManager::saveProject(const QString& filename) const
     return true;
 }
 
+void LayerManager::insertLayer(int index, std::unique_ptr<Layer> layer)
+{
+    if (!layer || index < 0 || index > static_cast<int>(m_layers.size())) {
+        return;
+    }
+
+    m_layers.insert(m_layers.begin() + index, std::move(layer));
+
+    // Обновляем активный слой если нужно
+    if (!m_activeLayer) {
+        setActiveLayer(0);
+    }
+
+    emit layersChanged();
+}
+
 bool LayerManager::loadProject(const QString& filename)
 {
     QFile file(filename);

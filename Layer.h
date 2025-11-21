@@ -11,7 +11,6 @@ public:
     explicit Layer(const QSize& size, const QString& name = "Layer");
     ~Layer() = default;
 
-    // Основные операции
     void setVisible(bool visible) { m_visible = visible; }
     bool isVisible() const { return m_visible; }
 
@@ -21,13 +20,11 @@ public:
     void setName(const QString& name) { m_name = name; }
     QString name() const { return m_name; }
 
-    // Работа с изображением
     QImage& image() { return m_image; }
     const QImage& image() const { return m_image; }
 
     void setImage(const QImage& image) { m_image = image; }
 
-    // Рисование
     void paint(QPainter& painter, const QRect& destRect);
 
 private:

@@ -19,6 +19,7 @@ public:
     void removeLayer(int index);
     void moveLayer(int fromIndex, int toIndex);
     void duplicateLayer(int index);
+    void insertLayer(int index, std::unique_ptr<Layer> layer);
 
     // Создание слоев
     Layer* createNewLayer(const QSize& size, const QString& name = "New Layer");

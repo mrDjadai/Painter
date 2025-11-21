@@ -1,10 +1,10 @@
 #include "CommandSystem.h"
 
-void CommandManager::ExecuteCommand(std::unique_ptr<Command> command)
+void CommandManager::ExecuteCommand(Command* command)
 {
     command->Do();
 
-    undoStack.push_back(std::move(command));
+    undoStack.push_back(command);
 
     redoStack.clear();
 

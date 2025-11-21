@@ -30,6 +30,7 @@ private:
     void InitializeLayers();
     void SetupLayerUI();
     void SetupLayerDockWidget();
+    void SetupNewLayout();
 
     CommandManager *commandManager;
     LayerManager *layerManager;

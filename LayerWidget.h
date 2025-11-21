@@ -10,13 +10,17 @@
 #include <QCheckBox>
 #include <QLabel>
 #include "LayerManager.h"
+#include "CommandSystem.h"
 
 class LayerListWidget : public QListWidget
 {
     Q_OBJECT
 
 public:
-    explicit LayerListWidget(QWidget* parent = nullptr);
+    LayerListWidget(QWidget* parent = nullptr);
+
+signals:
+    void layerMoved(int fromIndex, int toIndex);
 
 protected:
     void mousePressEvent(QMouseEvent* event) override;
@@ -34,14 +38,17 @@ class LayerWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit LayerWidget(LayerManager* layerManager, QWidget* parent = nullptr);
-    void handleLayerMove(int sourceListIndex, int targetListIndex);
+    LayerWidget(LayerManager* layerManager, CommandManager* comManager, QWidget* parent = nullptr);
+
 private slots:
     void onAddLayerClicked();
     void onRemoveLayerClicked();
     void onDuplicateLayerClicked();
     void onLayerSelectionChanged();
-    void onLayerVisibilityChanged(int index, bool visible);
+    void onLayerVisibilityChanged(int realIndex, bool visible);
+    void onLayerMoved(int fromIndex, int toIndex);
+    void onOpacityChanged(int value);
+
     void updateLayerList();
 
 private:
@@ -51,6 +58,8 @@ private:
     int getListIndexFromReal(int realIndex) const;
 
     LayerManager* m_layerManager;
+    CommandManager* m_commandManager;
+
     LayerListWidget* m_layerList;
     QToolButton* m_addButton;
     QToolButton* m_removeButton;

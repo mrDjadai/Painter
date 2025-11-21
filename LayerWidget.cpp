@@ -1,6 +1,6 @@
 #include "LayerWidget.h"
+#include "Commands.h"
 #include <QLabel>
-#include <QHBoxLayout>
 #include <QListWidgetItem>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -8,10 +8,11 @@
 #include <QMimeData>
 #include <QApplication>
 #include <QMouseEvent>
+#include <QCheckBox>
+#include <QPainter>
 #include <QDebug>
-#include <qpainter.h>
 
-// Реализация кастомного QListWidget для Drag and Drop
+// LayerListWidget implementation
 LayerListWidget::LayerListWidget(QWidget* parent)
     : QListWidget(parent)
 {
@@ -107,21 +108,22 @@ void LayerListWidget::dropEvent(QDropEvent* event)
         int targetIndex = row(targetItem);
 
         // Испускаем сигнал о перемещении
-        emit currentRowChanged(targetIndex); // Для обновления выделения
-
-        // Испускаем кастомный сигнал или обрабатываем через родителя
-        LayerWidget* parentWidget = qobject_cast<LayerWidget*>(parent());
-        if (parentWidget) {
-            parentWidget->handleLayerMove(sourceIndex, targetIndex);
-        }
+        emit layerMoved(sourceIndex, targetIndex);
 
         event->acceptProposedAction();
     }
 }
 
-LayerWidget::LayerWidget(LayerManager* layerManager, QWidget* parent)
+// LayerWidget implementation
+LayerWidget::LayerWidget(LayerManager* layerManager, CommandManager* comManager, QWidget* parent)
     : QWidget(parent)
     , m_layerManager(layerManager)
+    , m_commandManager(comManager)
+    , m_layerList(nullptr)
+    , m_addButton(nullptr)
+    , m_removeButton(nullptr)
+    , m_duplicateButton(nullptr)
+    , m_opacitySlider(nullptr)
 {
     setupUI();
     setupConnections();
@@ -178,12 +180,12 @@ void LayerWidget::setupUI()
     QLabel* opacityLabel = new QLabel("Opacity:");
     opacityLabel->setFixedWidth(50);
 
-    opacityLayout->addWidget(opacityLabel);
-
     m_opacitySlider = new QSlider(Qt::Horizontal);
     m_opacitySlider->setRange(0, 100);
     m_opacitySlider->setValue(100);
     m_opacitySlider->setEnabled(false);
+
+    opacityLayout->addWidget(opacityLabel);
     opacityLayout->addWidget(m_opacitySlider);
 
     // Собираем layout
@@ -202,56 +204,15 @@ void LayerWidget::setupConnections()
             this, &LayerWidget::onDuplicateLayerClicked);
     connect(m_layerList, &QListWidget::currentRowChanged,
             this, &LayerWidget::onLayerSelectionChanged);
-    connect(m_opacitySlider, &QSlider::valueChanged, this, [this](int value) {
-        int listIndex = m_layerList->currentRow();
-        if (listIndex >= 0 && m_layerManager) {
-            int realIndex = getRealLayerIndex(listIndex);
-            float opacity = value / 100.0f;
-            Layer* layer = m_layerManager->layerAt(realIndex);
-            if (layer) {
-                layer->setOpacity(opacity);
-                m_layerManager->layersChanged();
-            }
-        }
-    });
-}
-
-void LayerWidget::handleLayerMove(int sourceListIndex, int targetListIndex)
-{
-    if (!m_layerManager) return;
-
-    // Преобразуем индексы из списка в реальные индексы слоев
-    int sourceRealIndex = getRealLayerIndex(sourceListIndex);
-    int targetRealIndex = getRealLayerIndex(targetListIndex);
-
-    qDebug() << "Moving layer from" << sourceRealIndex << "to" << targetRealIndex
-             << "(list indices:" << sourceListIndex << "->" << targetListIndex << ")";
-
-    // Перемещаем слой
-    m_layerManager->moveLayer(sourceRealIndex, targetRealIndex);
-}
-
-int LayerWidget::getRealLayerIndex(int listIndex) const
-{
-    if (!m_layerManager || listIndex < 0) return -1;
-
-    // В списке слои отображаются в обратном порядке (снизу вверх)
-    // listIndex 0 = верхний элемент списка = последний слой в массиве
-    int layerCount = m_layerManager->layerCount();
-    return layerCount - 1 - listIndex;
-}
-
-int LayerWidget::getListIndexFromReal(int realIndex) const
-{
-    if (!m_layerManager || realIndex < 0) return -1;
-
-    int layerCount = m_layerManager->layerCount();
-    return layerCount - 1 - realIndex;
+    connect(m_layerList, &LayerListWidget::layerMoved,
+            this, &LayerWidget::onLayerMoved);
+    connect(m_opacitySlider, &QSlider::valueChanged,
+            this, &LayerWidget::onOpacityChanged);
 }
 
 void LayerWidget::onAddLayerClicked()
 {
-    if (!m_layerManager) return;
+    if (!m_layerManager || !m_commandManager) return;
 
     bool ok;
     QString name = QInputDialog::getText(this, "New Layer",
@@ -267,12 +228,14 @@ void LayerWidget::onAddLayerClicked()
         }
     }
 
-    m_layerManager->createNewLayer(size, name);
+    // Используем команду вместо прямого вызова
+    AddLayerCommand* command = new AddLayerCommand(m_layerManager, size, name);
+    m_commandManager->ExecuteCommand(command);
 }
 
 void LayerWidget::onRemoveLayerClicked()
 {
-    if (!m_layerManager) return;
+    if (!m_layerManager || !m_commandManager) return;
 
     int listIndex = m_layerList->currentRow();
     if (listIndex < 0) return;
@@ -292,19 +255,24 @@ void LayerWidget::onRemoveLayerClicked()
                                        QMessageBox::Yes | QMessageBox::No);
 
     if (result == QMessageBox::Yes) {
-        m_layerManager->removeLayer(realIndex);
+        // Используем команду вместо прямого вызова
+        DeleteLayerCommand* command = new DeleteLayerCommand(m_layerManager, realIndex);
+        m_commandManager->ExecuteCommand(command);
     }
 }
 
 void LayerWidget::onDuplicateLayerClicked()
 {
-    if (!m_layerManager) return;
+    if (!m_layerManager || !m_commandManager) return;
 
     int listIndex = m_layerList->currentRow();
     if (listIndex < 0) return;
 
     int realIndex = getRealLayerIndex(listIndex);
-    m_layerManager->duplicateLayer(realIndex);
+
+    // Используем команду вместо прямого вызова
+    DuplicateLayerCommand* command = new DuplicateLayerCommand(m_layerManager, realIndex);
+    m_commandManager->ExecuteCommand(command);
 }
 
 void LayerWidget::onLayerSelectionChanged()
@@ -327,12 +295,43 @@ void LayerWidget::onLayerSelectionChanged()
 
 void LayerWidget::onLayerVisibilityChanged(int realIndex, bool visible)
 {
-    if (m_layerManager && realIndex >= 0 && realIndex < m_layerManager->layerCount()) {
-        Layer* layer = m_layerManager->layerAt(realIndex);
-        if (layer) {
-            layer->setVisible(visible);
-            m_layerManager->layersChanged();
-        }
+    if (!m_layerManager || !m_commandManager) return;
+
+    Layer* layer = m_layerManager->layerAt(realIndex);
+    if (layer && layer->isVisible() != visible) {
+        // Используем команду вместо прямого вызова
+        ToggleLayerVisibilityCommand* command = new ToggleLayerVisibilityCommand(m_layerManager, realIndex);
+        m_commandManager->ExecuteCommand(command);
+    }
+}
+
+void LayerWidget::onLayerMoved(int fromListIndex, int toListIndex)
+{
+    if (!m_layerManager || !m_commandManager) return;
+
+    int fromRealIndex = getRealLayerIndex(fromListIndex);
+    int toRealIndex = getRealLayerIndex(toListIndex);
+
+    // Используем команду вместо прямого вызова
+    MoveLayerCommand* command = new MoveLayerCommand(m_layerManager, fromRealIndex, toRealIndex);
+    m_commandManager->ExecuteCommand(command);
+}
+
+void LayerWidget::onOpacityChanged(int value)
+{
+    if (!m_layerManager || !m_commandManager) return;
+
+    int listIndex = m_layerList->currentRow();
+    if (listIndex < 0) return;
+
+    int realIndex = getRealLayerIndex(listIndex);
+    float opacity = value / 100.0f;
+
+    Layer* layer = m_layerManager->layerAt(realIndex);
+    if (layer && qAbs(layer->opacity() - opacity) > 0.01f) {
+        // Используем команду вместо прямого вызова
+        ChangeLayerOpacityCommand* command = new ChangeLayerOpacityCommand(m_layerManager, realIndex, opacity);
+        m_commandManager->ExecuteCommand(command);
     }
 }
 
@@ -371,6 +370,7 @@ void LayerWidget::updateLayerList()
         visibilityCheck->setChecked(layer->isVisible());
         visibilityCheck->setFixedSize(20, 20);
 
+        // Используем лямбду с захватом индекса
         connect(visibilityCheck, &QCheckBox::toggled, this, [this, i](bool visible) {
             onLayerVisibilityChanged(i, visible);
         });
@@ -404,7 +404,6 @@ void LayerWidget::updateLayerList()
         // Выделяем активный слой
         if (i == m_layerManager->activeLayerIndex()) {
             item->setSelected(true);
-            // Подсветка будет через CSS
         }
     }
 
@@ -421,4 +420,22 @@ void LayerWidget::updateLayerList()
 
     m_removeButton->setEnabled(hasLayers && hasSelection && m_layerManager->layerCount() > 1);
     m_duplicateButton->setEnabled(hasLayers && hasSelection);
+}
+
+int LayerWidget::getRealLayerIndex(int listIndex) const
+{
+    if (!m_layerManager || listIndex < 0) return -1;
+
+    // В списке слои отображаются в обратном порядке (снизу вверх)
+    // listIndex 0 = верхний элемент списка = последний слой в массиве
+    int layerCount = m_layerManager->layerCount();
+    return layerCount - 1 - listIndex;
+}
+
+int LayerWidget::getListIndexFromReal(int realIndex) const
+{
+    if (!m_layerManager || realIndex < 0) return -1;
+
+    int layerCount = m_layerManager->layerCount();
+    return layerCount - 1 - realIndex;
 }
