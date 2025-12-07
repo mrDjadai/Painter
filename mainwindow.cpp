@@ -12,6 +12,7 @@
 #include <QDebug>
 #include "toolswidget.h"
 #include "colorpickerwidget.h"
+#include <QFileDialog>
 
 // Параметры пропорций интерфейса
 #define TOP_PANEL_HEIGHT_PERCENT 10    // Высота верхней панели (% от общей высоты)
@@ -70,9 +71,75 @@ MainWindow::MainWindow(QWidget *parent)
 
     SetShortcuts();
     SetupNewLayout();
-    InitializeLayers();
+
+    QMenu* fileMenu = menuBar()->addMenu("Файл");
+
+    QAction* saveAsAction = new QAction("Сохранить как", this);
+    fileMenu->addAction(saveAsAction);
+
+    connect(saveAsAction, &QAction::triggered, this, &MainWindow::saveAs);
 
     qDebug() << "Application initialized with Tools and Color systems";
+}
+
+void MainWindow::saveAs()
+{
+    QString filename = QFileDialog::getSaveFileName(
+        this,
+        "Сохранить проект как",
+        QString(),
+        "Painter Project (*.ptr)"
+        );
+
+    if (filename.isEmpty())
+        return;
+
+    if (!filename.endsWith(".ptr"))
+        filename += ".ptr";
+
+    if (layerManager->saveProject(filename))
+        statusBar()->showMessage("Сохранено: " + filename);
+    else
+        statusBar()->showMessage("Ошибка сохранения!");
+}
+
+
+void MainWindow::createNewCanvas(int w, int h)
+{
+    if (!layerManager) return;
+
+    QSize size(w, h);
+
+    // Удаляем старые слои
+//    layerManager->clear();
+
+    // Создаем фоновый слой
+    Layer* background = layerManager->createBackgroundLayer(size, Qt::white);
+    background->setName("Background");
+
+    layerManager->setActiveLayer(0);
+
+    layerWidget->InitRow();
+    layerView->update();
+
+    statusBar()->showMessage(
+        QString("Created new canvas %1×%2").arg(w).arg(h)
+        );
+}
+
+void MainWindow::loadProject(const QString& filename)
+{
+    if (!layerManager) return;
+
+    if (!layerManager->loadProject(filename)) {
+        statusBar()->showMessage("Failed to load project");
+        return;
+    }
+
+    layerWidget->InitRow();
+    layerView->update();
+
+    statusBar()->showMessage("Project loaded: " + filename);
 }
 
 void MainWindow::SetupNewLayout()

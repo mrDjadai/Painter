@@ -22,6 +22,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void createNewCanvas(int w, int h);
+    void loadProject(const QString& filename);
 
 private slots:
     void HandleUndo();
@@ -31,6 +33,7 @@ private slots:
     void onBrushSizeChanged(int size);
     void onPrimaryColorChanged(const QColor& color);
     void onSecondaryColorChanged(const QColor& color);
+    void saveAs();
 
 private:
     void SetShortcuts();

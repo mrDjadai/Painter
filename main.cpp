@@ -12,14 +12,14 @@ int main(int argc, char *argv[])
 
     QObject::connect(&start, &StartWindow::openFileRequested, [&](const QString& filename){
         MainWindow* mainWindow = new MainWindow();
- //       mainWindow->loadProject(filename);
+        mainWindow->loadProject(filename);
         start.close();
         mainWindow->show();
     });
 
     QObject::connect(&start, &StartWindow::createNewCanvasRequested, [&](int width, int height){
         MainWindow* mainWindow = new MainWindow();
-      //  mainWindow->createNewCanvas(width, height);
+        mainWindow->createNewCanvas(width, height);
         start.close();
         mainWindow->show();
     });
