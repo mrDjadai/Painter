@@ -2,10 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "CommandSystem.h"
 #include "LayerManager.h"
+#include "CommandSystem.h"
 #include "LayerView.h"
 #include "LayerWidget.h"
+#include "ToolManager.h"
+#include "ColorManager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -17,25 +19,31 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private:
-    Ui::MainWindow *ui;
-    void SetShortcuts();
+private slots:
     void HandleUndo();
     void HandleRedo();
-    void InitializeLayers();
-    void SetupLayerUI();
-    void SetupLayerDockWidget();
-    void SetupNewLayout();
+    void onLayersChanged();
+    void onToolChanged(ToolType tool);
+    void onBrushSizeChanged(int size);
+    void onPrimaryColorChanged(const QColor& color);
+    void onSecondaryColorChanged(const QColor& color);
 
-    CommandManager *commandManager;
-    LayerManager *layerManager;
+private:
+    void SetShortcuts();
+    void SetupNewLayout();
+    void InitializeLayers();
+
+    Ui::MainWindow *ui;
+    LayerManager* layerManager;
+    CommandManager* commandManager;
+    ToolManager* toolManager;
+    ColorManager* colorManager;
     LayerView* layerView;
     LayerWidget* layerWidget;
-    void onLayersChanged();
 };
+
 #endif // MAINWINDOW_H

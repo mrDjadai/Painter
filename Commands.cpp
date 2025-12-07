@@ -161,16 +161,12 @@ void ToggleLayerVisibilityCommand::Redo()
 }
 
 // ChangeLayerOpacityCommand
-ChangeLayerOpacityCommand::ChangeLayerOpacityCommand(LayerManager* manager, int layerIndex, float newOpacity)
-    : manager(manager), layerIndex(layerIndex), newOpacity(newOpacity), oldOpacity(1.0f)
-{
-    if (manager) {
-        Layer* layer = manager->layerAt(layerIndex);
-        if (layer) {
-            oldOpacity = layer->opacity();
-        }
-    }
-}
+ChangeLayerOpacityCommand::    ChangeLayerOpacityCommand(LayerManager* m, int layerIndex, float oldOpacity, float newOpacity)
+    : manager(m)
+    , layerIndex(layerIndex)
+    , oldOpacity(oldOpacity)
+    , newOpacity(newOpacity)
+{}
 
 void ChangeLayerOpacityCommand::Do()
 {
@@ -273,4 +269,39 @@ void DuplicateLayerCommand::Redo()
         }
         duplicateIndex = manager->layerCount() - 1;
     }
+}
+
+DrawCommand::DrawCommand(LayerManager* manager, int layerIndex, const QImage& before, const QImage& after)
+    : m_layerManager(manager)
+    , m_layerIndex(layerIndex)
+    , m_beforeImage(before)
+    , m_afterImage(after)
+{
+}
+
+void DrawCommand::Do()
+{
+    if (!m_layerManager) return;
+
+    Layer* layer = m_layerManager->layerAt(m_layerIndex);
+    if (!layer) return;
+
+    layer->setImage(m_afterImage);
+    m_layerManager->layersChanged();
+}
+
+void DrawCommand::Undo()
+{
+    if (!m_layerManager) return;
+
+    Layer* layer = m_layerManager->layerAt(m_layerIndex);
+    if (!layer) return;
+
+    layer->setImage(m_beforeImage);
+    m_layerManager->layersChanged();
+}
+
+void DrawCommand::Redo()
+{
+    Do();
 }

@@ -206,8 +206,78 @@ void LayerWidget::setupConnections()
             this, &LayerWidget::onLayerSelectionChanged);
     connect(m_layerList, &LayerListWidget::layerMoved,
             this, &LayerWidget::onLayerMoved);
+
+    connect(m_opacitySlider, &QSlider::sliderPressed,
+            this, &LayerWidget::onOpacitySliderPressed);
     connect(m_opacitySlider, &QSlider::valueChanged,
-            this, &LayerWidget::onOpacityChanged);
+            this, &LayerWidget::onOpacitySliderValueChanged);
+    connect(m_opacitySlider, &QSlider::sliderReleased,
+            this, &LayerWidget::onOpacitySliderReleased);
+
+    connect(m_layerManager, &LayerManager::layersChanged,
+            this, &LayerWidget::updateOpacitySlider);
+
+}
+
+void LayerWidget::onOpacitySliderValueChanged(int value)
+{
+    int listIndex = m_layerList->currentRow();
+    if (listIndex < 0 || !m_layerManager) return;
+
+    int realIndex = getRealLayerIndex(listIndex);
+    Layer* layer = m_layerManager->layerAt(realIndex);
+    if (!layer) return;
+
+    // Мгновенное визуальное обновление
+    layer->setOpacity(value / 100.0f);
+    m_layerManager->layersChanged();
+    updateLayerList(); // обновляем текст процентов
+}
+
+void LayerWidget::onOpacitySliderPressed()
+{
+    int listIndex = m_layerList->currentRow();
+    if (listIndex < 0 || !m_layerManager) return;
+
+    int realIndex = getRealLayerIndex(listIndex);
+    Layer* layer = m_layerManager->layerAt(realIndex);
+    if (!layer) return;
+
+    m_startOpacity = layer->opacity(); // Запоминаем начальную прозрачность
+}
+
+void LayerWidget::onOpacitySliderReleased()
+{
+    int listIndex = m_layerList->currentRow();
+    if (listIndex < 0 || !m_layerManager || !m_commandManager) return;
+
+    int realIndex = getRealLayerIndex(listIndex);
+    Layer* layer = m_layerManager->layerAt(realIndex);
+    if (!layer) return;
+
+    float newOpacity = layer->opacity();
+
+    // Добавляем команду только если значение изменилось
+    if (qAbs(newOpacity - m_startOpacity) > 0.001f) {
+        ChangeLayerOpacityCommand* command =
+            new ChangeLayerOpacityCommand(m_layerManager, realIndex,m_startOpacity, newOpacity);
+        m_commandManager->ExecuteCommand(command);
+    }
+}
+
+void LayerWidget::updateOpacitySlider()
+{
+    int listIndex = m_layerList->currentRow();
+    if (listIndex < 0 || !m_layerManager) return;
+
+    int realIndex = getRealLayerIndex(listIndex);
+    Layer* layer = m_layerManager->layerAt(realIndex);
+    if (!layer) return;
+
+    // Обновляем слайдер без генерации сигналов
+    m_opacitySlider->blockSignals(true);
+    m_opacitySlider->setValue(static_cast<int>(layer->opacity() * 100));
+    m_opacitySlider->blockSignals(false);
 }
 
 void LayerWidget::onAddLayerClicked()
@@ -317,24 +387,6 @@ void LayerWidget::onLayerMoved(int fromListIndex, int toListIndex)
     m_commandManager->ExecuteCommand(command);
 }
 
-void LayerWidget::onOpacityChanged(int value)
-{
-    if (!m_layerManager || !m_commandManager) return;
-
-    int listIndex = m_layerList->currentRow();
-    if (listIndex < 0) return;
-
-    int realIndex = getRealLayerIndex(listIndex);
-    float opacity = value / 100.0f;
-
-    Layer* layer = m_layerManager->layerAt(realIndex);
-    if (layer && qAbs(layer->opacity() - opacity) > 0.01f) {
-        // Используем команду вместо прямого вызова
-        ChangeLayerOpacityCommand* command = new ChangeLayerOpacityCommand(m_layerManager, realIndex, opacity);
-        m_commandManager->ExecuteCommand(command);
-    }
-}
-
 void LayerWidget::updateLayerList()
 {
     if (!m_layerManager) return;
@@ -438,4 +490,9 @@ int LayerWidget::getListIndexFromReal(int realIndex) const
 
     int layerCount = m_layerManager->layerCount();
     return layerCount - 1 - realIndex;
+}
+
+void LayerWidget :: InitRow()
+{
+    m_layerList->setCurrentRow(0);
 }

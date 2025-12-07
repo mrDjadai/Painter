@@ -39,6 +39,7 @@ class LayerWidget : public QWidget
 
 public:
     LayerWidget(LayerManager* layerManager, CommandManager* comManager, QWidget* parent = nullptr);
+    void InitRow();
 
 private slots:
     void onAddLayerClicked();
@@ -47,9 +48,13 @@ private slots:
     void onLayerSelectionChanged();
     void onLayerVisibilityChanged(int realIndex, bool visible);
     void onLayerMoved(int fromIndex, int toIndex);
-    void onOpacityChanged(int value);
+
 
     void updateLayerList();
+    void onOpacitySliderPressed();
+    void onOpacitySliderValueChanged(int value);   // для мгновенного обновления прозрачности
+    void onOpacitySliderReleased();                // для добавления команды в CommandManager
+    void updateOpacitySlider();
 
 private:
     void setupUI();
@@ -65,6 +70,7 @@ private:
     QToolButton* m_removeButton;
     QToolButton* m_duplicateButton;
     QSlider* m_opacitySlider;
+    float m_startOpacity = 1.0f;
 };
 
 #endif // LAYERWIDGET_H

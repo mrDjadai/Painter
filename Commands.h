@@ -5,7 +5,7 @@
 #include "Layer.h"
 #include <QList>
 #include <QPointer>
-#include "LayerWidget.h"
+#include "LayerManager.h"
 
 class AddLayerCommand : public Command
 {
@@ -79,7 +79,7 @@ private:
 class ChangeLayerOpacityCommand : public Command
 {
 public:
-    ChangeLayerOpacityCommand(LayerManager* manager, int layerIndex, float newOpacity);
+    ChangeLayerOpacityCommand(LayerManager* m, int layerIndex, float oldOpacity, float newOpacity);
 
     void Do() override;
     void Undo() override;
@@ -124,6 +124,22 @@ private:
     int sourceIndex;
     Layer* duplicatedLayer;
     int duplicateIndex;
+};
+
+class DrawCommand : public Command
+{
+public:
+    DrawCommand(LayerManager* manager, int layerIndex, const QImage& before, const QImage& after);
+
+    void Do() override;
+    void Undo() override;
+    void Redo() override;
+
+private:
+    LayerManager* m_layerManager;
+    int m_layerIndex;
+    QImage m_beforeImage;
+    QImage m_afterImage;
 };
 
 #endif // COMMANDS_H

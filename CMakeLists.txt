@@ -35,6 +35,15 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         LayerWidget.cpp
         Commands.cpp
         Commands.h
+        colormanager.h colormanager.cpp
+        colorpickerwidget.h colorpickerwidget.cpp
+        ToolType.h
+        toolmanager.h toolmanager.cpp
+        toolswidget.h toolswidget.cpp
+        Tools.h
+        Tools.cpp
+        StartWindow.h
+        StartWindow.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Painter APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
