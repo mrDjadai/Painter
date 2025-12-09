@@ -81,7 +81,7 @@ Layer* LayerManager::createNewLayer(const QSize& size, const QString& name)
 
 Layer* LayerManager::createBackgroundLayer(const QSize& size, Qt::GlobalColor color)
 {
-    auto layer = std::make_unique<Layer>(size, "Background");
+    auto layer = std::make_unique<Layer>(size, "Фон");
     layer->image().fill(color);
     Layer* result = layer.get();
     addLayer(std::move(layer));
@@ -108,6 +108,7 @@ void LayerManager::setActiveLayer(int index)
         m_activeLayer = nullptr;
         return;
     }
+
 
     Layer* newActive = m_layers[index].get();
     if (m_activeLayer != newActive) {
@@ -191,6 +192,11 @@ void LayerManager::insertLayer(int index, std::unique_ptr<Layer> layer)
 
     emit layersChanged();
 }
+void LayerManager::ClearLayers()
+{
+    m_layers.clear();
+    m_activeLayer = nullptr;
+}
 
 bool LayerManager::loadProject(const QString& filename)
 {
@@ -210,8 +216,7 @@ bool LayerManager::loadProject(const QString& filename)
         return false;
 
     // Очищаем текущие слои
-    m_layers.clear();
-    m_activeLayer = nullptr;
+    ClearLayers();
 
     // Загружаем слои
     for (int i = 0; i < layerCount; ++i) {

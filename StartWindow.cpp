@@ -11,12 +11,12 @@ StartWindow::StartWindow(QWidget* parent)
     m_createButton = new QPushButton("Создать новый холст");
 
     m_widthSpin = new QSpinBox();
-    m_widthSpin->setRange(100, 5000);
-    m_widthSpin->setValue(800);
+    m_widthSpin->setRange(1, 16000);
+    m_widthSpin->setValue(1280);
 
     m_heightSpin = new QSpinBox();
-    m_heightSpin->setRange(100, 5000);
-    m_heightSpin->setValue(600);
+    m_heightSpin->setRange(1, 16000);
+    m_heightSpin->setValue(720);
 
     QLabel* widthLabel = new QLabel("Ширина:");
     QLabel* heightLabel = new QLabel("Высота:");

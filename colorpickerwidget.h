@@ -23,17 +23,12 @@ private slots:
     void onPrimaryColorClicked();
     void onSecondaryColorClicked();
     void onSwapColorsClicked();
-    void onApplyHexClicked();
     void onHistoryColorClicked();
-    void onHexInputChanged(const QString& text);
-    void onHexInputFocusChanged(bool hasFocus);
 
 private:
     void setupUI();
     void setupConnections();
     void showColorDialog(bool isPrimary);
-    void clearErrorState();
-    void onHexInputFocusLost();
     ColorManager* m_colorManager;
 
     // UI элементы для основных цветов
@@ -41,16 +36,10 @@ private:
     QPushButton* m_secondaryColorButton;
     QPushButton* m_swapButton;
 
-    // Hex ввод
-    QLineEdit* m_hexInput;
-
     // История цветов
     QWidget* m_colorHistoryWidget;
     QGridLayout* m_historyLayout;
     QList<QPushButton*> m_historyButtons;
-
-    bool m_isErrorState;
-    bool m_lastFocusState;
 };
 
 #endif // COLORPICKERWIDGET_H

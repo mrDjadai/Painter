@@ -17,10 +17,8 @@ ColorPickerWidget::ColorPickerWidget(ColorManager* colorManager, QWidget* parent
     , m_primaryColorButton(nullptr)
     , m_secondaryColorButton(nullptr)
     , m_swapButton(nullptr)
-    , m_hexInput(nullptr)
     , m_colorHistoryWidget(nullptr)
     , m_historyLayout(nullptr)
-    , m_isErrorState(false)
 {
     setupUI();
     setupConnections();
@@ -39,65 +37,23 @@ ColorPickerWidget::ColorPickerWidget(ColorManager* colorManager, QWidget* parent
 void ColorPickerWidget::setupUI()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(12);
-    mainLayout->setContentsMargins(8, 8, 8, 8);
+    mainLayout->setSpacing(30);
+    mainLayout->setContentsMargins(8, 4, 8, 8);
 
-    // ===== ПЕРВАЯ СТРОКА: HEX ВВОД + ОСНОВНЫЕ ЦВЕТА =====
+    // ===== ПЕРВАЯ СТРОКА:ОСНОВНЫЕ ЦВЕТА =====
     QHBoxLayout* topRowLayout = new QHBoxLayout();
     topRowLayout->setSpacing(15);
 
-    // ===== ЛЕВАЯ ЧАСТЬ: HEX ВВОД =====
-    QVBoxLayout* hexContainerLayout = new QVBoxLayout();
-    hexContainerLayout->setSpacing(4);
-    hexContainerLayout->setContentsMargins(0, 0, 0, 0);
-
-    // Заголовок hex ввода
-    QLabel* hexLabel = new QLabel("Hex Color");
-    hexLabel->setFixedHeight(16);
-    hexLabel->setStyleSheet("color: white; font-weight: bold;");
-    hexLabel->setAlignment(Qt::AlignCenter);
-    hexContainerLayout->addWidget(hexLabel);
-
-    // Контейнер для поля ввода hex
-    QHBoxLayout* hexInputLayout = new QHBoxLayout();
-    hexInputLayout->setSpacing(5);
-    hexInputLayout->setContentsMargins(0, 0, 0, 0);
-
-    m_hexInput = new QLineEdit();
-    m_hexInput->setPlaceholderText("#RRGGBB");
-    m_hexInput->setMaxLength(7);
-    m_hexInput->setFixedWidth(85);
-    m_hexInput->setFixedHeight(26);
-    m_hexInput->setStyleSheet(
-        "QLineEdit {"
-        "   background-color: white;"
-        "   color: black;"
-        "   border: 1px solid #999999;"
-        "   border-radius: 4px;"
-        "   padding: 2px 8px;"
-        "   font-size: 12px;"
-        "}"
-        "QLineEdit:focus {"
-        "   border: 2px solid #0066cc;"
-        "}"
-        );
-    hexInputLayout->addWidget(m_hexInput);
-
-
-    hexContainerLayout->addLayout(hexInputLayout);
-
-    topRowLayout->addLayout(hexContainerLayout);
-
     // ===== ПРАВАЯ ЧАСТЬ: ОСНОВНЫЕ ЦВЕТА =====
     QHBoxLayout* colorsLayout = new QHBoxLayout();
-    colorsLayout->setSpacing(12);
+    colorsLayout->setSpacing(15);
 
     // Первичный цвет
     QVBoxLayout* primaryLayout = new QVBoxLayout();
-    primaryLayout->setSpacing(4);
+    primaryLayout->setSpacing(20);
     primaryLayout->setContentsMargins(0, 0, 0, 0);
 
-    QLabel* primaryLabel = new QLabel("Primary");
+    QLabel* primaryLabel = new QLabel("Первичный");
     primaryLabel->setAlignment(Qt::AlignCenter);
     primaryLabel->setFixedHeight(16);
     primaryLabel->setStyleSheet("color: white; font-weight: bold; font-size: 12px;");
@@ -105,7 +61,6 @@ void ColorPickerWidget::setupUI()
 
     m_primaryColorButton = new QPushButton();
     m_primaryColorButton->setFixedSize(36, 36);
-    m_primaryColorButton->setToolTip("Click to change primary color");
     m_primaryColorButton->setCursor(Qt::PointingHandCursor);
     primaryLayout->addWidget(m_primaryColorButton, 0, Qt::AlignHCenter);
 
@@ -114,7 +69,6 @@ void ColorPickerWidget::setupUI()
     // Кнопка обмена цветами
     m_swapButton = new QPushButton("↔");
     m_swapButton->setFixedSize(28, 28);
-    m_swapButton->setToolTip("Swap primary and secondary colors (X)");
     m_swapButton->setCursor(Qt::PointingHandCursor);
     m_swapButton->setStyleSheet(
         "QPushButton {"
@@ -137,10 +91,10 @@ void ColorPickerWidget::setupUI()
 
     // Вторичный цвет
     QVBoxLayout* secondaryLayout = new QVBoxLayout();
-    secondaryLayout->setSpacing(4);
+    secondaryLayout->setSpacing(20);
     secondaryLayout->setContentsMargins(0, 0, 0, 0);
 
-    QLabel* secondaryLabel = new QLabel("Secondary");
+    QLabel* secondaryLabel = new QLabel("Вторичный");
     secondaryLabel->setAlignment(Qt::AlignCenter);
     secondaryLabel->setFixedHeight(16);
     secondaryLabel->setStyleSheet("color: white; font-weight: bold; font-size: 12px;");
@@ -148,7 +102,6 @@ void ColorPickerWidget::setupUI()
 
     m_secondaryColorButton = new QPushButton();
     m_secondaryColorButton->setFixedSize(36, 36);
-    m_secondaryColorButton->setToolTip("Click to change secondary color");
     m_secondaryColorButton->setCursor(Qt::PointingHandCursor);
     secondaryLayout->addWidget(m_secondaryColorButton, 0, Qt::AlignHCenter);
 
@@ -161,8 +114,8 @@ void ColorPickerWidget::setupUI()
 
 
     // ===== ВТОРАЯ СТРОКА: ИСТОРИЯ ЦВЕТОВ =====
-    QLabel* historyLabel = new QLabel("Recent Colors");
-    historyLabel->setFixedHeight(18);
+    QLabel* historyLabel = new QLabel("История цветов");
+    historyLabel->setFixedHeight(45);
     historyLabel->setStyleSheet("color: white; font-weight: bold; font-size: 12px;");
     mainLayout->addWidget(historyLabel);
 
@@ -173,7 +126,7 @@ void ColorPickerWidget::setupUI()
 
     // Создаем grid layout для истории
     m_historyLayout = new QGridLayout(m_colorHistoryWidget);
-    m_historyLayout->setSpacing(6);
+    m_historyLayout->setSpacing(2);
     m_historyLayout->setContentsMargins(2, 2, 2, 2);
     m_historyLayout->setAlignment(Qt::AlignTop);
 
@@ -191,12 +144,6 @@ void ColorPickerWidget::setupConnections()
 
     connect(m_swapButton, &QPushButton::clicked,
             this, &ColorPickerWidget::onSwapColorsClicked);
-
-    connect(m_hexInput, &QLineEdit::returnPressed,
-            this, &ColorPickerWidget::onApplyHexClicked);
-
-    connect(m_hexInput, &QLineEdit::textChanged,
-            this, &ColorPickerWidget::onHexInputChanged);
 }
 
 void ColorPickerWidget::updateColorDisplays()
@@ -249,10 +196,10 @@ void ColorPickerWidget::updateColorDisplays()
 
     if (!history.isEmpty())
     {
-        int maxColors = qMin(8, history.size());
+        int maxColors = qMin(16, history.size());
         for (int i = 0; i < maxColors; ++i) {
             QPushButton* colorButton = new QPushButton();
-            colorButton->setFixedSize(24, 24); // Увеличили размер кнопок истории
+            colorButton->setFixedSize(12, 12); // Увеличили размер кнопок истории
             colorButton->setCursor(Qt::PointingHandCursor);
 
             QString buttonStyle = QString(
@@ -277,7 +224,7 @@ void ColorPickerWidget::updateColorDisplays()
                     this, &ColorPickerWidget::onHistoryColorClicked);
 
             m_historyButtons.append(colorButton);
-            m_historyLayout->addWidget(colorButton, i / 4, i % 4);
+            m_historyLayout->addWidget(colorButton, 0, i);
         }
     }
 
@@ -302,72 +249,6 @@ void ColorPickerWidget::onSwapColorsClicked()
     }
 }
 
-void ColorPickerWidget::onApplyHexClicked()
-{
-    if (!m_colorManager) return;
-
-    QString hex = m_hexInput->text().trimmed();
-    if (hex.isEmpty()) return;
-
-    // Добавляем # если нет
-    if (!hex.startsWith('#')) {
-        hex = '#' + hex;
-    }
-
-    // Проверяем формат
-    QRegularExpression hexRegex("^#[0-9A-Fa-f]{6}$");
-    QRegularExpressionMatch match = hexRegex.match(hex);
-
-    if (!match.hasMatch()) {
-        // Проверяем 3-значный формат
-        QRegularExpression shortHexRegex("^#[0-9A-Fa-f]{3}$");
-        QRegularExpressionMatch shortMatch = shortHexRegex.match(hex);
-
-        if (shortMatch.hasMatch()) {
-            // Расширяем 3-значный формат до 6-значного
-            hex = "#"
-                  + QString(hex[1]) + QString(hex[1])
-                  + QString(hex[2]) + QString(hex[2])
-                  + QString(hex[3]) + QString(hex[3]);
-        } else {
-            // Некорректный формат - показываем ошибку
-            m_isErrorState = true;
-            m_hexInput->setStyleSheet(
-                "QLineEdit {"
-                "   background-color: white;"
-                "   color: red;"
-                "   border: 1px solid red;"
-                "   border-radius: 3px;"
-                "   padding: 2px 5px;"
-                "}"
-                );
-            return;
-        }
-    }
-
-    // Сбрасываем состояние ошибки
-    clearErrorState();
-
-    QColor color(hex);
-    if (color.isValid()) {
-        m_colorManager->setPrimaryColor(color);
-        // Снимаем фокус с поля ввода после успешного применения
-        m_hexInput->clearFocus();
-    } else {
-        // Некорректный цвет
-        m_isErrorState = true;
-        m_hexInput->setStyleSheet(
-            "QLineEdit {"
-            "   background-color: white;"
-            "   color: red;"
-            "   border: 1px solid red;"
-            "   border-radius: 3px;"
-            "   padding: 2px 5px;"
-            "}"
-            );
-    }
-}
-
 void ColorPickerWidget::onHistoryColorClicked()
 {
     if (!m_colorManager) return;
@@ -383,28 +264,6 @@ void ColorPickerWidget::onHistoryColorClicked()
     }
 }
 
-void ColorPickerWidget::onHexInputChanged(const QString& text)
-{
-    // Сбрасываем состояние ошибки при изменении текста
-    if (m_isErrorState) {
-        clearErrorState();
-    }
-}
-
-void ColorPickerWidget::onHexInputFocusChanged(bool hasFocus)
-{
-    if (!hasFocus) {
-        // При потере фокуса сбрасываем состояние ошибки
-        clearErrorState();
-
-        // Также можно проверить и применить цвет, если поле не пустое
-        QString hex = m_hexInput->text().trimmed();
-        if (!hex.isEmpty() && !hex.startsWith('#')) {
-            // Автоматически добавляем # если забыли
-            m_hexInput->setText("#" + hex);
-        }
-    }
-}
 
 void ColorPickerWidget::showColorDialog(bool isPrimary)
 {
@@ -426,30 +285,5 @@ void ColorPickerWidget::showColorDialog(bool isPrimary)
         } else {
             m_colorManager->setSecondaryColor(color);
         }
-
-        // Сбрасываем состояние ошибки в hex поле
-        clearErrorState();
-        // Снимаем фокус с hex поля если он был
-        m_hexInput->clearFocus();
-    }
-}
-
-void ColorPickerWidget::clearErrorState()
-{
-    if (m_isErrorState) {
-        m_isErrorState = false;
-        m_hexInput->setStyleSheet(
-            "QLineEdit {"
-            "   background-color: white;"
-            "   color: black;"
-            "   border: 1px solid #999999;"
-            "   border-radius: 3px;"
-            "   padding: 2px 5px;"
-            "}"
-            "QLineEdit:focus {"
-            "   border: 1px solid #0066cc;"
-            "}"
-            );
-        m_hexInput->setPlaceholderText("#RRGGBB");
     }
 }

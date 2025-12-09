@@ -1,6 +1,7 @@
 // LayerCommands.cpp
 #include "Commands.h"
 #include "LayerManager.h"
+#include <qpainter.h>
 
 // AddLayerCommand
 AddLayerCommand::AddLayerCommand(LayerManager* manager, const QSize& size, const QString& name)
@@ -195,81 +196,6 @@ void ChangeLayerOpacityCommand::Redo()
     Do();
 }
 
-// RenameLayerCommand
-RenameLayerCommand::RenameLayerCommand(LayerManager* manager, int layerIndex, const QString& newName)
-    : manager(manager), layerIndex(layerIndex), newName(newName)
-{
-    if (manager) {
-        Layer* layer = manager->layerAt(layerIndex);
-        if (layer) {
-            oldName = layer->name();
-        }
-    }
-}
-
-void RenameLayerCommand::Do()
-{
-    if (manager) {
-        Layer* layer = manager->layerAt(layerIndex);
-        if (layer) {
-            layer->setName(newName);
-            manager->layersChanged();
-        }
-    }
-}
-
-void RenameLayerCommand::Undo()
-{
-    if (manager) {
-        Layer* layer = manager->layerAt(layerIndex);
-        if (layer) {
-            layer->setName(oldName);
-            manager->layersChanged();
-        }
-    }
-}
-
-void RenameLayerCommand::Redo()
-{
-    Do();
-}
-
-// DuplicateLayerCommand
-DuplicateLayerCommand::DuplicateLayerCommand(LayerManager* manager, int layerIndex)
-    : manager(manager), sourceIndex(layerIndex), duplicatedLayer(nullptr), duplicateIndex(-1)
-{
-}
-
-void DuplicateLayerCommand::Do()
-{
-    if (manager) {
-        manager->duplicateLayer(sourceIndex);
-        duplicateIndex = manager->layerCount() - 1;
-        duplicatedLayer = manager->layerAt(duplicateIndex);
-    }
-}
-
-void DuplicateLayerCommand::Undo()
-{
-    if (manager && duplicateIndex >= 0) {
-        manager->removeLayer(duplicateIndex);
-    }
-}
-
-void DuplicateLayerCommand::Redo()
-{
-    if (manager && duplicatedLayer) {
-        // Создаем дубликат с тем же содержимым
-        Layer* newLayer = manager->createNewLayer(duplicatedLayer->image().size(),
-                                                  duplicatedLayer->name() + " Copy");
-        if (newLayer) {
-            newLayer->setImage(duplicatedLayer->image().copy());
-            newLayer->setOpacity(duplicatedLayer->opacity());
-            newLayer->setVisible(duplicatedLayer->isVisible());
-        }
-        duplicateIndex = manager->layerCount() - 1;
-    }
-}
 
 DrawCommand::DrawCommand(LayerManager* manager, int layerIndex, const QImage& before, const QImage& after)
     : m_layerManager(manager)
@@ -304,4 +230,147 @@ void DrawCommand::Undo()
 void DrawCommand::Redo()
 {
     Do();
+}
+
+RenameLayerCommand::RenameLayerCommand(LayerManager* manager, int index,
+                                       const QString& oldName, const QString& newName)
+    : m_manager(manager)
+    , m_index(index)
+    , m_oldName(oldName)
+    , m_newName(newName)
+{
+}
+
+void RenameLayerCommand::Do()
+{
+    Redo();
+}
+
+void RenameLayerCommand::Undo()
+{
+    if (!m_manager) return;
+
+    Layer* layer = m_manager->layerAt(m_index);
+    if (!layer) return;
+
+    layer->setName(m_oldName);
+    m_manager->layersChanged();
+}
+
+void RenameLayerCommand::Redo()
+{
+    if (!m_manager) return;
+
+    Layer* layer = m_manager->layerAt(m_index);
+    if (!layer) return;
+
+    layer->setName(m_newName);
+    m_manager->layersChanged();
+}
+
+MergeLayerWithNextCommand::MergeLayerWithNextCommand(LayerManager* manager, int topIndex)
+    : m_manager(manager)
+    , m_topIndex(topIndex)
+    , m_topBackup(*m_manager->layerAt(topIndex))
+    , m_bottomBackup(*m_manager->layerAt(topIndex - 1))
+{
+}
+
+void MergeLayerWithNextCommand::Do()
+{
+    Redo();
+}
+
+void MergeLayerWithNextCommand::Redo()
+{
+    if (!m_manager) return;
+
+    int bottomIndex = m_topIndex - 1;
+    if (bottomIndex < 0) return;
+
+    Layer* top = m_manager->layerAt(m_topIndex);
+    Layer* bottom = m_manager->layerAt(bottomIndex);
+    if (!top || !bottom) return;
+
+    // Рисуем верхний слой поверх нижнего
+    QPainter p(&bottom->image());
+    p.setOpacity(top->opacity());
+    p.drawImage(0, 0, top->image());
+    p.end();
+
+    // Удаляем верхний слой
+    m_manager->removeLayer(m_topIndex);
+
+    // Обновляем UI
+    m_manager->layersChanged();
+}
+
+void MergeLayerWithNextCommand::Undo()
+{
+    if (!m_manager) return;
+
+    // Удаляем объединённый слой (на позиции верхнего)
+    m_manager->removeLayer(m_topIndex - 1);
+
+    // Вставляем обратно исходные слои в правильном порядке
+    // Сначала нижний слой (м_topIndex - 1), потом верхний (м_topIndex)
+    m_manager->insertLayer(m_topIndex - 1, std::make_unique<Layer>(m_bottomBackup));
+    m_manager->insertLayer(m_topIndex, std::make_unique<Layer>(m_topBackup));
+
+    // Восстанавливаем активный слой
+    m_manager->setActiveLayer(m_topIndex);
+
+    m_manager->layersChanged();
+}
+
+
+DuplicateLayerCommand::DuplicateLayerCommand(LayerManager* manager, int layerIndex)
+    : m_manager(manager), m_sourceIndex(layerIndex), m_duplicateIndex(-1)
+{
+}
+
+void DuplicateLayerCommand::Do()
+{
+    if (!m_manager || m_sourceIndex < 0 || m_sourceIndex >= m_manager->layerCount())
+        return;
+
+    const Layer* sourceLayer = m_manager->layerAt(m_sourceIndex);
+    if (!sourceLayer)
+        return;
+
+    // Создаем копию слоя
+    m_duplicatedLayer = std::make_unique<Layer>(sourceLayer->image().size(),
+                                                sourceLayer->name() + " Copy");
+    m_duplicatedLayer->setImage(sourceLayer->image().copy());
+    m_duplicatedLayer->setOpacity(sourceLayer->opacity());
+    m_duplicatedLayer->setVisible(sourceLayer->isVisible());
+
+    // Вставляем слой сразу после исходного
+    m_duplicateIndex = m_sourceIndex + 1;
+    m_manager->insertLayer(m_duplicateIndex, std::move(m_duplicatedLayer));
+}
+
+void DuplicateLayerCommand::Undo()
+{
+    if (!m_manager || m_duplicateIndex < 0 || m_duplicateIndex >= m_manager->layerCount())
+        return;
+
+    // Перемещаем слой обратно в уникальный указатель для Redo
+    Layer* layer = m_manager->layerAt(m_duplicateIndex);
+    if (layer) {
+        m_duplicatedLayer = std::make_unique<Layer>(layer->image().size(), layer->name());
+        m_duplicatedLayer->setImage(layer->image().copy());
+        m_duplicatedLayer->setOpacity(layer->opacity());
+        m_duplicatedLayer->setVisible(layer->isVisible());
+        m_manager->removeLayer(m_duplicateIndex);
+    }
+}
+
+void DuplicateLayerCommand::Redo()
+{
+    if (!m_manager || !m_duplicatedLayer)
+        return;
+
+    // Вставляем слой обратно
+    m_manager->insertLayer(m_duplicateIndex, std::move(m_duplicatedLayer));
 }

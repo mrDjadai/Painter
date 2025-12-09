@@ -19,7 +19,7 @@ public:
                        QWidget* parent = nullptr);
 
     QSize sizeHint() const override;
-
+    QImage getCombinedImage() const;
 protected:
     void paintEvent(QPaintEvent* event) override;
 
@@ -43,8 +43,13 @@ private:
     PencilTool* m_pencilTool = nullptr;
     FillTool* m_fillTool = nullptr;
     EyedropperTool* m_eyedropperTool = nullptr;
+
     BrushTool* m_brushtool = nullptr;
     EraserTool* m_erasertool = nullptr;
+
+    LineTool* m_linetool = nullptr;
+    RectTool* m_recttool = nullptr;
+    EllipseTool* m_ellipsetool = nullptr;
 
     // Текущий инструмент
     Tool* m_currentTool = nullptr;

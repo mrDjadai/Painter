@@ -60,12 +60,17 @@ void ToolsWidget::setupUI()
 
     addTool(ToolType::Fill,       "Заливка",       1, 0);
     addTool(ToolType::Eyedropper, "Пипетка", 1, 1);
- //   addTool(ToolType::Line,       "Line",       1, 2);
+    addTool(ToolType::Line,       "Линия",       1, 2);
 
-  //  addTool(ToolType::Rectangle,  "Rectangle",  2, 0);
-  //  addTool(ToolType::Ellipse,    "Ellipse",    2, 1);
+    addTool(ToolType::Rectangle,  "Прямоугольник",  2, 0);
+    addTool(ToolType::Ellipse,    "Элипс",    2, 1);
 
     mainLayout->addLayout(toolsGrid);
+
+    QWidget* slidersContainer = new QWidget();
+    QHBoxLayout* slidersLayout = new QHBoxLayout(slidersContainer);
+    slidersLayout->setContentsMargins(0, 0, 0, 0);
+    slidersLayout->setSpacing(0); // отступ между блоками
 
     // ----------------------------
     //       СЛАЙДЕР РАЗМЕРА
@@ -93,7 +98,45 @@ void ToolsWidget::setupUI()
 
     brushSizeLayout->addStretch();
 
-    mainLayout->addWidget(m_brushSizeContainer); // добавляем контейнер в layout
+    slidersLayout->addWidget(m_brushSizeContainer); // добавляем контейнер в layout
+
+    // ----------------------------
+    //   СЛАЙДЕР ДОПУСКА ЗАЛИВКИ
+    // ----------------------------
+
+    m_fillToleranceContainer = new QWidget();
+    QHBoxLayout* tolLayout = new QHBoxLayout(m_fillToleranceContainer);
+    tolLayout->setContentsMargins(0, 0, 0, 0);
+    m_fillToleranceContainer->setFixedHeight(10);
+
+
+    // Метка "Допуск:"
+    m_fillToleranceLabel = new QLabel("Допуск:");
+    m_fillToleranceLabel->setStyleSheet("color: white;");
+    m_fillToleranceLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    tolLayout->addWidget(m_fillToleranceLabel);
+
+    // Ползунок
+    m_fillToleranceSlider = new QSlider(Qt::Horizontal);
+    m_fillToleranceSlider->setRange(0, 255);
+    m_fillToleranceSlider->setValue(0);
+    m_fillToleranceSlider->setFixedWidth(110);
+    m_fillToleranceSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    tolLayout->addWidget(m_fillToleranceSlider);
+
+    // Цифровое значение
+    m_fillToleranceValueLabel = new QLabel(QString::number(m_fillToleranceSlider->value()));
+    m_fillToleranceValueLabel->setStyleSheet("color: white;");
+    m_fillToleranceValueLabel->setFixedWidth(25);
+    m_fillToleranceValueLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    tolLayout->addWidget(m_fillToleranceValueLabel);
+
+    // Растягиваем оставшееся пространство
+    tolLayout->addStretch();
+
+    slidersLayout->addWidget(m_fillToleranceContainer);
+
+    mainLayout->addWidget(slidersContainer);
     mainLayout->addStretch();
 }
 
@@ -109,15 +152,31 @@ void ToolsWidget::setupConnections()
         }
         m_brushSizeLabel->setText(QString::number(value));
     });
+
+    connect(m_fillToleranceSlider, &QSlider::valueChanged, this,
+            [this](int value){
+                if (m_toolManager)
+                    m_toolManager->setTolerance(value);
+                m_fillToleranceValueLabel->setText(QString::number(value));
+            }
+            );
+
 }
 
 bool ToolsWidget::toolHasBrushSize(ToolType tool)
 {
-    // Выбирай сам, какие инструменты используют размер
-    return tool == ToolType::Pencil ||
-           tool == ToolType::Brush ||
-           tool == ToolType::Eraser ||
-           tool == ToolType::Line;
+    switch (tool) {
+    case ToolType::Pencil:
+    case ToolType::Brush:
+    case ToolType::Eraser:
+    case ToolType::Line:
+    case ToolType::Rectangle:
+    case ToolType::Ellipse:
+        return true;
+    default:
+        return false;
+        break;
+    }
 }
 
 void ToolsWidget::onToolButtonClicked()
@@ -150,6 +209,13 @@ void ToolsWidget::updateToolSelection()
     m_sizeLabel->setVisible(show);
     m_brushSizeSlider->setVisible(show);
     m_brushSizeLabel->setVisible(show);
+
+    bool fillVisible = (currentTool == ToolType::Fill);
+    m_fillToleranceContainer->setVisible(fillVisible);
+
+    if (fillVisible) {
+        m_fillToleranceSlider->setValue(m_toolManager->tolerance());
+    }
 
     if (show) {
         m_brushSizeSlider->setValue(m_toolManager->brushSize());

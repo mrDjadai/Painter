@@ -44,6 +44,8 @@ public:
     bool saveProject(const QString& filename) const;
     bool loadProject(const QString& filename);
 
+    void ClearLayers();
+
 signals:
     void layersChanged();
     void activeLayerChanged(int index);

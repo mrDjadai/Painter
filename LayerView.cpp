@@ -19,11 +19,15 @@ LayerView::LayerView(LayerManager* layerManager,
 
     // Инициализация инструментов
     m_pencilTool = new PencilTool(m_layerManager, m_commandManager, m_colorManager, m_toolManager, this);
-    m_fillTool = new FillTool(m_layerManager, m_commandManager, m_colorManager, this);
+    m_fillTool = new FillTool(m_layerManager, m_commandManager, m_colorManager, m_toolManager, this);
     m_eyedropperTool = new EyedropperTool(m_layerManager, m_colorManager, this);
+
     m_brushtool = new BrushTool(m_layerManager, m_commandManager, m_colorManager, m_toolManager, this);
     m_erasertool = new EraserTool(m_layerManager, m_commandManager, m_toolManager, this);
 
+    m_linetool = new LineTool(m_layerManager, m_commandManager, m_colorManager, m_toolManager, this);
+    m_recttool = new RectTool(m_layerManager, m_commandManager, m_colorManager, m_toolManager, this);
+    m_ellipsetool = new EllipseTool(m_layerManager, m_commandManager, m_colorManager, m_toolManager, this);
     updateCurrentTool();
 
     if (m_toolManager) {
@@ -35,22 +39,64 @@ QSize LayerView::sizeHint() const
 {
     return QSize(800, 600);
 }
-
 void LayerView::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    painter.fillRect(rect(), Qt::white);
-
-    if (m_layerManager) {
-        QRect targetRect = rect(); // растягиваем под весь виджет
-        m_layerManager->renderLayers(painter, targetRect);
+    // Определяем размеры холста по первому слою
+    if (!m_layerManager || m_layerManager->layerCount() == 0) {
+        painter.fillRect(rect(), Qt::white);
+        return;
     }
+
+    const Layer* layer0 = m_layerManager->layerAt(0);
+    QSize canvasSize = layer0->image().size();
+
+    // Вычисляем масштаб для сохранения пропорций
+    float scaleX = float(width()) / canvasSize.width();
+    float scaleY = float(height()) / canvasSize.height();
+    float scale = qMin(scaleX, scaleY);
+
+    // Размер изображения на виджете
+    int imgWidth = int(canvasSize.width() * scale);
+    int imgHeight = int(canvasSize.height() * scale);
+
+    // Координаты для центрирования
+    int offsetX = (width() - imgWidth) / 2;
+    int offsetY = (height() - imgHeight) / 2;
+
+    // Рисуем фон "шахматкой"
+    const int checkerSize = 10;
+    QBrush checkerBrush(QColor(200,200,200), Qt::SolidPattern);
+    QBrush checkerBrush2(QColor(150,150,150), Qt::SolidPattern);
+    for (int y = 0; y < height(); y += checkerSize) {
+        for (int x = 0; x < width(); x += checkerSize) {
+            QRect rect(x, y, checkerSize, checkerSize);
+            if (((x/10 + y/10) % 2) == 0)
+                painter.fillRect(rect, checkerBrush);
+            else
+                painter.fillRect(rect, checkerBrush2);
+        }
+    }
+
+    // Рисуем слои с учетом прозрачности
+    painter.save();
+    painter.translate(offsetX, offsetY);
+    painter.scale(scale, scale);
+
+    for (int i = 0; i < m_layerManager->layerCount(); ++i) {
+        const Layer* layer = m_layerManager->layerAt(i);
+        if (!layer || !layer->isVisible()) continue;
+        painter.setOpacity(layer->opacity());
+        painter.drawImage(0, 0, layer->image());
+    }
+
+    painter.restore();
 }
 
-// Преобразуем координаты мыши в координаты слоя
+
 QPoint LayerView::toLayerCoordinates(const QPoint& pos) const
 {
     if (!m_layerManager || m_layerManager->activeLayerIndex() < 0)
@@ -60,11 +106,19 @@ QPoint LayerView::toLayerCoordinates(const QPoint& pos) const
     QSize canvasSize = layer->image().size();
     QSize widgetSize = size();
 
-    float scaleX = float(canvasSize.width()) / widgetSize.width();
-    float scaleY = float(canvasSize.height()) / widgetSize.height();
+    float scaleX = float(widgetSize.width()) / canvasSize.width();
+    float scaleY = float(widgetSize.height()) / canvasSize.height();
+    float scale = qMin(scaleX, scaleY);
 
-    int x = int(pos.x() * scaleX);
-    int y = int(pos.y() * scaleY);
+    int imgWidth = int(canvasSize.width() * scale);
+    int imgHeight = int(canvasSize.height() * scale);
+
+    int offsetX = (widgetSize.width() - imgWidth) / 2;
+    int offsetY = (widgetSize.height() - imgHeight) / 2;
+
+    // Сдвигаем координаты мыши относительно изображения и делим на масштаб
+    int x = int((pos.x() - offsetX) / scale);
+    int y = int((pos.y() - offsetY) / scale);
 
     // Ограничиваем координаты рамками слоя
     x = qBound(0, x, canvasSize.width() - 1);
@@ -92,6 +146,15 @@ void LayerView::updateCurrentTool()
         break;
     case ToolType::Eyedropper:
         m_currentTool = m_eyedropperTool;
+        break;
+    case ToolType::Line:
+        m_currentTool = m_linetool;
+        break;
+    case ToolType::Rectangle:
+        m_currentTool = m_recttool;
+        break;
+    case ToolType::Ellipse:
+        m_currentTool = m_ellipsetool;
         break;
     default:
         m_currentTool = nullptr;
@@ -121,4 +184,39 @@ void LayerView::mouseReleaseEvent(QMouseEvent* event)
         QPoint layerPos = toLayerCoordinates(event->pos());
         m_currentTool->mouseRelease(layerPos);
     }
+}
+QImage LayerView::getCombinedImage() const
+{
+    if (!m_layerManager)
+        return QImage();
+
+    // Определяем размер холста по первому слою
+    int width = 0;
+    int height = 0;
+    if (m_layerManager->layerCount() > 0) {
+        const Layer* layer0 = m_layerManager->layerAt(0);
+        width = layer0->image().width();
+        height = layer0->image().height();
+    }
+
+    if (width == 0 || height == 0)
+        return QImage();
+
+    QImage combined(width, height, QImage::Format_ARGB32);
+    combined.fill(Qt::white); // Фон белый
+
+    QPainter painter(&combined);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // Рендерим все слои
+    for (int i = 0; i < m_layerManager->layerCount(); ++i) {
+        const Layer* layer = m_layerManager->layerAt(i);
+        if (!layer) continue;
+
+        painter.setOpacity(layer->opacity());
+        painter.drawImage(0, 0, layer->image());
+    }
+
+    painter.end();
+    return combined;
 }

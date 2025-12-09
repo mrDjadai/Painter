@@ -92,24 +92,6 @@ private:
     float oldOpacity;
 };
 
-// Команда переименования слоя
-class RenameLayerCommand : public Command
-{
-public:
-    RenameLayerCommand(LayerManager* manager, int layerIndex, const QString& newName);
-
-    void Do() override;
-    void Undo() override;
-    void Redo() override;
-
-private:
-    QPointer<LayerManager> manager;
-    int layerIndex;
-    QString newName;
-    QString oldName;
-};
-
-// Команда дублирования слоя
 class DuplicateLayerCommand : public Command
 {
 public:
@@ -120,10 +102,10 @@ public:
     void Redo() override;
 
 private:
-    QPointer<LayerManager> manager;
-    int sourceIndex;
-    Layer* duplicatedLayer;
-    int duplicateIndex;
+    QPointer<LayerManager> m_manager;              // Менеджер слоев
+    int m_sourceIndex;                             // Индекс исходного слоя
+    std::unique_ptr<Layer> m_duplicatedLayer;     // Копия дублированного слоя
+    int m_duplicateIndex;                          // Индекс, куда добавлен слой
 };
 
 class DrawCommand : public Command
@@ -141,5 +123,49 @@ private:
     QImage m_beforeImage;
     QImage m_afterImage;
 };
+
+// -----------------------------
+// RenameLayerCommand
+// -----------------------------
+class RenameLayerCommand : public Command
+{
+public:
+    RenameLayerCommand(LayerManager* manager, int index,
+                       const QString& oldName, const QString& newName);
+
+    void Do() override;
+    void Undo() override;
+    void Redo() override;
+
+private:
+    LayerManager* m_manager;
+    int m_index;
+    QString m_oldName;
+    QString m_newName;
+};
+
+
+// -----------------------------
+// MergeLayerWithNextCommand
+// -----------------------------
+class MergeLayerWithNextCommand : public Command
+{
+public:
+    MergeLayerWithNextCommand(LayerManager* manager, int topIndex);
+
+    void Do() override;
+    void Undo() override;
+    void Redo() override;
+
+private:
+    LayerManager* m_manager;
+    int m_topIndex;   // Верхний слой, который накладываем
+
+    // Бэкапы
+    Layer m_topBackup;
+    Layer m_bottomBackup;
+};
+
+
 
 #endif // COMMANDS_H

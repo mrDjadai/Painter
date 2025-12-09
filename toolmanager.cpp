@@ -41,3 +41,11 @@ QString ToolManager::toolName(ToolType tool) const
     default: return "Unknown";
     }
 }
+
+void ToolManager::setTolerance(int value)
+{
+    if (m_tolerance == value)
+        return;
+
+    m_tolerance = value;
+}

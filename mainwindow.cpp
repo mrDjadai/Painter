@@ -13,6 +13,7 @@
 #include "toolswidget.h"
 #include "colorpickerwidget.h"
 #include <QFileDialog>
+#include <QInputDialog>
 
 // Параметры пропорций интерфейса
 #define TOP_PANEL_HEIGHT_PERCENT 10    // Высота верхней панели (% от общей высоты)
@@ -74,10 +75,23 @@ MainWindow::MainWindow(QWidget *parent)
 
     QMenu* fileMenu = menuBar()->addMenu("Файл");
 
+    QAction* newProjectAction = new QAction("Новый проект", this);
+    fileMenu->addAction(newProjectAction);
+    connect(newProjectAction, &QAction::triggered, this, &MainWindow::createNewCanvasDialog);
+
+    // Открыть проект
+    QAction* openProjectAction = new QAction("Открыть проект", this);
+    fileMenu->addAction(openProjectAction);
+    connect(openProjectAction, &QAction::triggered, this, &MainWindow::loadProjectDialog);
+
     QAction* saveAsAction = new QAction("Сохранить как", this);
     fileMenu->addAction(saveAsAction);
-
     connect(saveAsAction, &QAction::triggered, this, &MainWindow::saveAs);
+
+
+    QAction* exportAction = new QAction("Экспорт...", this);
+    fileMenu->addAction(exportAction);
+    connect(exportAction, &QAction::triggered, this, &MainWindow::exportCanvas);
 
     qDebug() << "Application initialized with Tools and Color systems";
 }
@@ -111,15 +125,15 @@ void MainWindow::createNewCanvas(int w, int h)
     QSize size(w, h);
 
     // Удаляем старые слои
-//    layerManager->clear();
+    layerManager->ClearLayers();
+    commandManager->Clear();
 
     // Создаем фоновый слой
     Layer* background = layerManager->createBackgroundLayer(size, Qt::white);
-    background->setName("Background");
+
 
     layerManager->setActiveLayer(0);
 
-    layerWidget->InitRow();
     layerView->update();
 
     statusBar()->showMessage(
@@ -136,7 +150,6 @@ void MainWindow::loadProject(const QString& filename)
         return;
     }
 
-    layerWidget->InitRow();
     layerView->update();
 
     statusBar()->showMessage("Project loaded: " + filename);
@@ -205,7 +218,7 @@ void MainWindow::SetupNewLayout()
     toolsContainerLayout->setContentsMargins(5, 5, 5, 5);
 
     // Заголовок инструментов
-    QLabel* toolsTitle = new QLabel("Tools");
+    QLabel* toolsTitle = new QLabel("Инструменты");
     toolsTitle->setStyleSheet(
         "color: " TOP_PANEL_TEXT_COLOR ";"
         "font-weight: bold;"
@@ -250,7 +263,7 @@ void MainWindow::SetupNewLayout()
     colorsContainerLayout->setContentsMargins(5, 5, 5, 5);
 
     // Заголовок цветов
-    QLabel* colorsTitle = new QLabel("Colors");
+    QLabel* colorsTitle = new QLabel("Цвета");
     colorsTitle->setStyleSheet(
         "color: " TOP_PANEL_TEXT_COLOR ";"
         "font-weight: bold;"
@@ -330,7 +343,7 @@ void MainWindow::SetupNewLayout()
     rightLayout->setContentsMargins(5, 5, 5, 5);
     rightLayout->setSpacing(5);
 
-    QLabel* layersTitle = new QLabel("Layers");
+    QLabel* layersTitle = new QLabel("Слои");
     layersTitle->setStyleSheet(
         "font-weight: bold;"
         "font-size: 14px;"
@@ -453,7 +466,6 @@ void MainWindow::InitializeLayers()
     }
 
     layerManager->setActiveLayer(0);
-    layerWidget->InitRow();
     statusBar()->showMessage(QString("Created %1 initial layers").arg(layerManager->layerCount()));
 }
 
@@ -585,4 +597,66 @@ MainWindow::~MainWindow()
 
     delete commandManager;
     delete ui;
+}
+
+void MainWindow::exportCanvas()
+{
+    if (!layerView) return;
+
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Экспорт холста",
+        QString(),
+        "PNG (*.png);;JPEG (*.jpg *.jpeg)"
+        );
+
+    if (fileName.isEmpty())
+        return;
+
+    // Определяем формат по расширению файла
+    QString format;
+    if (fileName.endsWith(".png", Qt::CaseInsensitive))
+        format = "PNG";
+    else if (fileName.endsWith(".jpg", Qt::CaseInsensitive) || fileName.endsWith(".jpeg", Qt::CaseInsensitive))
+        format = "JPEG";
+    else {
+        // Если расширение не указано, добавим .png по умолчанию
+        fileName += ".png";
+        format = "PNG";
+    }
+
+    // Получаем итоговое изображение с холста
+    QImage image = layerView->getCombinedImage();
+
+    if (image.save(fileName, format.toUtf8().constData())) {
+        statusBar()->showMessage("Экспортировано: " + fileName);
+    } else {
+        statusBar()->showMessage("Ошибка экспорта!");
+    }
+}
+
+void MainWindow::createNewCanvasDialog()
+{
+    // Простейший диалог с QInputDialog для ширины и высоты
+    bool ok;
+    int w = QInputDialog::getInt(this, "Новый проект", "Ширина:", 1280, 1, 16000, 1, &ok);
+    if (!ok) return;
+    int h = QInputDialog::getInt(this, "Новый проект", "Высота:", 720, 1, 16000, 1, &ok);
+    if (!ok) return;
+
+    createNewCanvas(w, h);
+}
+
+void MainWindow::loadProjectDialog()
+{
+    QString filename = QFileDialog::getOpenFileName(
+        this,
+        "Открыть проект",
+        QString(),
+        "Painter Project (*.ptr)"
+        );
+    if (!filename.isEmpty()) {
+        commandManager->Clear();
+        loadProject(filename);
+    }
 }

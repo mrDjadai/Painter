@@ -24,6 +24,9 @@ public:
     ~MainWindow();
     void createNewCanvas(int w, int h);
     void loadProject(const QString& filename);
+public slots:
+    void createNewCanvasDialog();
+    void loadProjectDialog();
 
 private slots:
     void HandleUndo();
@@ -39,6 +42,7 @@ private:
     void SetShortcuts();
     void SetupNewLayout();
     void InitializeLayers();
+    void exportCanvas();
 
     Ui::MainWindow *ui;
     LayerManager* layerManager;

@@ -40,6 +40,13 @@ private:
     QSlider* m_brushSizeSlider = nullptr;
     QLabel*  m_brushSizeLabel = nullptr;
     QLabel*  m_sizeLabel = nullptr;
+
+
+    QWidget* m_fillToleranceContainer = nullptr;
+    QSlider* m_fillToleranceSlider = nullptr;
+    QLabel*  m_fillToleranceLabel = nullptr;
+    QLabel*  m_fillToleranceValueLabel = nullptr;
+
 };
 
 #endif // TOOLSWIDGET_H

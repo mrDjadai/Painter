@@ -20,6 +20,10 @@ public:
     bool usePressure() const { return m_usePressure; }
     void setUsePressure(bool use);
 
+    int tolerance() const{ return m_tolerance; }
+    void setTolerance(int);
+
+
     QString toolName(ToolType tool) const;
 
 signals:
@@ -30,6 +34,7 @@ private:
     ToolType m_currentTool;
     int m_brushSize;
     bool m_usePressure;
+    int m_tolerance = 0;
 };
 
 #endif // TOOLMANAGER_H

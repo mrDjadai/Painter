@@ -160,9 +160,24 @@ void LayerWidget::setupUI()
     m_duplicateButton->setToolTip("Duplicate Selected Layer");
     m_duplicateButton->setFixedSize(30, 25);
 
+    m_renameButton = new QToolButton();
+    m_renameButton->setText("✎");
+    m_renameButton->setToolTip("Rename Layer");
+    m_renameButton->setFixedSize(30, 25);
+
+    m_mergeButton = new QToolButton();
+    m_mergeButton->setText("⧉↓");
+    m_mergeButton->setToolTip("Merge with Below Layer");
+    m_mergeButton->setFixedSize(30, 25);
+
+
+
     buttonLayout->addWidget(m_addButton);
     buttonLayout->addWidget(m_removeButton);
     buttonLayout->addWidget(m_duplicateButton);
+    buttonLayout->addWidget(m_renameButton);
+    buttonLayout->addWidget(m_mergeButton);
+
     buttonLayout->addStretch();
 
     // Список слоев
@@ -177,7 +192,7 @@ void LayerWidget::setupUI()
 
     // Слайдер прозрачности
     QHBoxLayout* opacityLayout = new QHBoxLayout();
-    QLabel* opacityLabel = new QLabel("Opacity:");
+    QLabel* opacityLabel = new QLabel("Прозрачность:");
     opacityLabel->setFixedWidth(50);
 
     m_opacitySlider = new QSlider(Qt::Horizontal);
@@ -202,6 +217,13 @@ void LayerWidget::setupConnections()
             this, &LayerWidget::onRemoveLayerClicked);
     connect(m_duplicateButton, &QToolButton::clicked,
             this, &LayerWidget::onDuplicateLayerClicked);
+    connect(m_renameButton, &QToolButton::clicked,
+            this, &LayerWidget::onRenameLayerClicked);
+
+    connect(m_mergeButton, &QToolButton::clicked,
+            this, &LayerWidget::onMergeWithNextClicked);
+
+
     connect(m_layerList, &QListWidget::currentRowChanged,
             this, &LayerWidget::onLayerSelectionChanged);
     connect(m_layerList, &LayerListWidget::layerMoved,
@@ -285,9 +307,9 @@ void LayerWidget::onAddLayerClicked()
     if (!m_layerManager || !m_commandManager) return;
 
     bool ok;
-    QString name = QInputDialog::getText(this, "New Layer",
-                                         "Layer name:", QLineEdit::Normal,
-                                         "New Layer", &ok);
+    QString name = QInputDialog::getText(this, "Новый слой",
+                                         "Имя слоя:", QLineEdit::Normal,
+                                         "Новый слой", &ok);
     if (!ok || name.isEmpty()) return;
 
     QSize size(800, 600);
@@ -366,7 +388,6 @@ void LayerWidget::onLayerSelectionChanged()
 void LayerWidget::onLayerVisibilityChanged(int realIndex, bool visible)
 {
     if (!m_layerManager || !m_commandManager) return;
-
     Layer* layer = m_layerManager->layerAt(realIndex);
     if (layer && layer->isVisible() != visible) {
         // Используем команду вместо прямого вызова
@@ -464,6 +485,7 @@ void LayerWidget::updateLayerList()
         m_layerList->setCurrentRow(currentListRow);
     }
 
+    SetRow(getRealLayerIndex(m_layerManager->activeLayerIndex()));
     m_layerList->blockSignals(false);
 
     // Обновляем состояние кнопок
@@ -472,6 +494,14 @@ void LayerWidget::updateLayerList()
 
     m_removeButton->setEnabled(hasLayers && hasSelection && m_layerManager->layerCount() > 1);
     m_duplicateButton->setEnabled(hasLayers && hasSelection);
+
+    bool canRename = hasSelection;
+    bool canMerge = hasSelection && m_layerManager->layerCount() > 1 &&
+                    getRealLayerIndex(m_layerList->currentRow()) > 0;
+
+    m_renameButton->setEnabled(canRename);
+    m_mergeButton->setEnabled(canMerge);
+    m_opacitySlider->setEnabled(hasSelection);
 }
 
 int LayerWidget::getRealLayerIndex(int listIndex) const
@@ -492,7 +522,58 @@ int LayerWidget::getListIndexFromReal(int realIndex) const
     return layerCount - 1 - realIndex;
 }
 
-void LayerWidget :: InitRow()
+void LayerWidget :: SetRow(int row)
 {
-    m_layerList->setCurrentRow(0);
+    if(m_layerList->currentRow() != row)
+    {
+        m_layerList->setCurrentRow(row);
+    }
+}
+
+void LayerWidget::onRenameLayerClicked()
+{
+    if (!m_layerManager || !m_commandManager) return;
+
+    int listIndex = m_layerList->currentRow();
+    if (listIndex < 0) return;
+
+    int realIndex = getRealLayerIndex(listIndex);
+    Layer* layer = m_layerManager->layerAt(realIndex);
+    if (!layer) return;
+
+    bool ok;
+    QString newName = QInputDialog::getText(
+        this, "Переименовать слой",
+        "Новое имя:",
+        QLineEdit::Normal,
+        layer->name(),
+        &ok
+        );
+
+    if (!ok || newName.isEmpty() || newName == layer->name())
+        return;
+
+    RenameLayerCommand* cmd =
+        new RenameLayerCommand(m_layerManager, realIndex, layer->name(), newName);
+    m_commandManager->ExecuteCommand(cmd);
+}
+
+void LayerWidget::onMergeWithNextClicked()
+{
+    if (!m_layerManager || !m_commandManager) return;
+
+    int listIndex = m_layerList->currentRow();
+    if (listIndex < 0) return;
+
+    int realIndex = getRealLayerIndex(listIndex);
+
+    if (realIndex <= 0) {
+        QMessageBox::warning(this, "Merge Layers",
+                             "Нельзя объединить: выбранный слой самый нижний.");
+        return;
+    }
+
+    MergeLayerWithNextCommand* cmd =
+        new MergeLayerWithNextCommand(m_layerManager, realIndex);
+    m_commandManager->ExecuteCommand(cmd);
 }

@@ -110,7 +110,7 @@ class FillTool : public Tool
 {
     Q_OBJECT
 public:
-    FillTool(LayerManager* layers, CommandManager* commands, ColorManager* colors, QObject* parent = nullptr);
+    FillTool(LayerManager* layers, CommandManager* commands, ColorManager* colors, ToolManager* tools, QObject* parent = nullptr);
 
     void mousePress(const QPoint& pos) override;
     void mouseMove(const QPoint& pos) override {}
@@ -120,9 +120,91 @@ private:
     LayerManager* m_layerManager;
     CommandManager* m_commandManager;
     ColorManager* m_colorManager;
+    ToolManager* m_toolManager;
 
     QImage m_startImage;
 
     void floodFill(QImage& image, const QPoint& start, const QColor& color);
+};
+
+class LineTool : public Tool
+{
+    Q_OBJECT
+public:
+    LineTool(LayerManager* lm,
+             CommandManager* cm,
+             ColorManager* col,
+             ToolManager* tm,
+             QObject* parent = nullptr);
+
+    void mousePress(const QPoint& pos) override;
+    void mouseMove(const QPoint& pos) override;
+    void mouseRelease(const QPoint& pos) override;
+
+private:
+    LayerManager* m_layerManager;
+    CommandManager* m_commandManager;
+    ColorManager* m_colorManager;
+    ToolManager* m_toolManager;
+
+    QPoint m_startPos;
+    QPoint m_lastPos;
+
+    QImage m_startImage;
+    bool m_drawing = false;
+};
+
+class RectTool : public Tool
+{
+    Q_OBJECT
+public:
+    RectTool(LayerManager* lm,
+             CommandManager* cm,
+             ColorManager* col,
+             ToolManager* tm,
+             QObject* parent = nullptr);
+
+    void mousePress(const QPoint& pos) override;
+    void mouseMove(const QPoint& pos) override;
+    void mouseRelease(const QPoint& pos) override;
+
+private:
+    LayerManager* m_layerManager;
+    CommandManager* m_commandManager;
+    ColorManager* m_colorManager;
+    ToolManager* m_toolManager;
+
+    QPoint m_startPos;
+    QPoint m_lastPos;
+
+    QImage m_startImage;
+    bool m_drawing = false;
+};
+
+class EllipseTool : public Tool
+{
+    Q_OBJECT
+public:
+    EllipseTool(LayerManager* lm,
+                CommandManager* cm,
+                ColorManager* col,
+                ToolManager* tm,
+                QObject* parent = nullptr);
+
+    void mousePress(const QPoint& pos) override;
+    void mouseMove(const QPoint& pos) override;
+    void mouseRelease(const QPoint& pos) override;
+
+private:
+    LayerManager* m_layerManager;
+    CommandManager* m_commandManager;
+    ColorManager* m_colorManager;
+    ToolManager* m_toolManager;
+
+    QPoint m_startPos;
+    QPoint m_lastPos;
+
+    QImage m_startImage;
+    bool m_drawing = false;
 };
 #endif // TOOLS_H
