@@ -3,12 +3,13 @@
 
 #include <QApplication>
 
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     StartWindow start;
-    start.show();  // показываем только стартовое окно
+    start.show();
 
     QObject::connect(&start, &StartWindow::openFileRequested, [&](const QString& filename){
         MainWindow* mainWindow = new MainWindow();
@@ -23,6 +24,14 @@ int main(int argc, char *argv[])
         start.close();
         mainWindow->show();
     });
+
+    QObject::connect(&start, &StartWindow::openImageRequested,
+                     [&](const QString& filename){
+                         MainWindow* mainWindow = new MainWindow();
+                         mainWindow->openImageAsNewProject(filename);
+                         start.close();
+                         mainWindow->show();
+                     });
 
     return a.exec();
 }

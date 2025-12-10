@@ -13,20 +13,16 @@ class ColorManager : public QObject
 public:
     explicit ColorManager(QObject* parent = nullptr);
 
-    // Основной цвет
     QColor primaryColor() const { return m_primaryColor; }
     void setPrimaryColor(const QColor& color);
 
-    // Вторичный цвет
     QColor secondaryColor() const { return m_secondaryColor; }
     void setSecondaryColor(const QColor& color);
 
-    // История цветов
     const QVector<QColor>& colorHistory() const { return m_colorHistory; }
     void addToHistory(const QColor& color);
     void clearHistory();
 
-    // Сохранение/загрузка
     void saveColors();
     void loadColors();
 

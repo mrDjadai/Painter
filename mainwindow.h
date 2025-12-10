@@ -24,6 +24,8 @@ public:
     ~MainWindow();
     void createNewCanvas(int w, int h);
     void loadProject(const QString& filename);
+    void openImageAsNewProject(const QString& filename);
+
 public slots:
     void createNewCanvasDialog();
     void loadProjectDialog();

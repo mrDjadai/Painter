@@ -10,8 +10,9 @@
 class AddLayerCommand : public Command
 {
 public:
-    AddLayerCommand(LayerManager* manager, const QSize& size, const QString& name = "New Layer");
-    ~AddLayerCommand();
+    AddLayerCommand(LayerManager* manager,
+                    const QSize& size,
+                    const QString& name = "New Layer");
 
     void Do() override;
     void Undo() override;
@@ -19,10 +20,16 @@ public:
 
 private:
     QPointer<LayerManager> manager;
-    QSize size;
-    QString name;
-    Layer* createdLayer;
-    int layerIndex;
+
+    QSize m_size;
+    QString m_name;
+
+    int m_index;  // индекс, куда был добавлен слой
+
+    // сохранённые данные
+    QImage m_image;
+    float m_opacity;
+    bool  m_visibility;
 };
 
 // Команда удаления слоя

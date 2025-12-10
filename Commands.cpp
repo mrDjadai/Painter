@@ -3,45 +3,57 @@
 #include "LayerManager.h"
 #include <qpainter.h>
 
-// AddLayerCommand
-AddLayerCommand::AddLayerCommand(LayerManager* manager, const QSize& size, const QString& name)
-    : manager(manager), size(size), name(name), createdLayer(nullptr), layerIndex(-1)
-{
-}
 
-AddLayerCommand::~AddLayerCommand()
+AddLayerCommand::AddLayerCommand(LayerManager* manager,
+                                 const QSize& size,
+                                 const QString& name)
+    : manager(manager)
+    , m_size(size)
+    , m_name(name)
+    , m_index(-1)
 {
-    // Память управляется LayerManager
 }
 
 void AddLayerCommand::Do()
 {
-    if (manager) {
-        createdLayer = manager->createNewLayer(size, name);
-        layerIndex = manager->layerCount() - 1;
-    }
+    if (!manager) return;
+
+    Layer* layer = manager->createNewLayer(m_size, m_name);
+    if (!layer) return;
+
+    m_index = manager->layerCount() - 1;
+
+    // Сохраняем параметры, чтобы Redo был корректным
+    m_image = layer->image().copy();
+    m_opacity = layer->opacity();
+    m_visibility = layer->isVisible();
+
+    manager->setActiveLayer(m_index);
 }
 
 void AddLayerCommand::Undo()
 {
-    if (manager && layerIndex >= 0) {
-        manager->removeLayer(layerIndex);
-        createdLayer = nullptr;
-    }
+    if (!manager || m_index < 0) return;
+
+    manager->removeLayer(m_index);
 }
 
 void AddLayerCommand::Redo()
 {
-    if (manager && createdLayer) {
-        // LayerManager создаст новый слой, но нам нужно восстановить содержимое
-        Layer* newLayer = manager->createNewLayer(size, name);
-        if (newLayer) {
-            newLayer->setImage(createdLayer->image().copy());
-            newLayer->setOpacity(createdLayer->opacity());
-            newLayer->setVisible(createdLayer->isVisible());
-        }
-        layerIndex = manager->layerCount() - 1;
-    }
+    if (!manager) return;
+
+    // создаём снова
+    Layer* newLayer = manager->createNewLayer(m_size, m_name);
+    if (!newLayer) return;
+
+    newLayer->setImage(m_image.copy());
+    newLayer->setOpacity(m_opacity);
+    newLayer->setVisible(m_visibility);
+
+    // index станет последним
+    m_index = manager->layerCount() - 1;
+
+    manager->setActiveLayer(m_index);
 }
 
 // DeleteLayerCommand
@@ -213,6 +225,7 @@ void DrawCommand::Do()
     if (!layer) return;
 
     layer->setImage(m_afterImage);
+    m_layerManager->setActiveLayer(m_layerIndex);
     m_layerManager->layersChanged();
 }
 
@@ -224,6 +237,7 @@ void DrawCommand::Undo()
     if (!layer) return;
 
     layer->setImage(m_beforeImage);
+    m_layerManager->setActiveLayer(m_layerIndex);
     m_layerManager->layersChanged();
 }
 
