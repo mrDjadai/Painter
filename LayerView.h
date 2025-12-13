@@ -18,7 +18,6 @@ public:
                        ColorManager* colorManager,
                        QWidget* parent = nullptr);
 
-    QSize sizeHint() const override;
     QImage getCombinedImage() const;
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -31,7 +30,6 @@ private slots:
     void updateCurrentTool();
 
 private:
-    // Преобразует координаты мыши виджета в координаты активного слоя
     QPoint toLayerCoordinates(const QPoint& pos) const;
 
     LayerManager* m_layerManager = nullptr;
@@ -39,7 +37,6 @@ private:
     CommandManager* m_commandManager = nullptr;
     ColorManager* m_colorManager = nullptr;
 
-    // Инструменты
     PencilTool* m_pencilTool = nullptr;
     FillTool* m_fillTool = nullptr;
     EyedropperTool* m_eyedropperTool = nullptr;
@@ -51,6 +48,6 @@ private:
     RectTool* m_recttool = nullptr;
     EllipseTool* m_ellipsetool = nullptr;
 
-    // Текущий инструмент
+
     Tool* m_currentTool = nullptr;
 };

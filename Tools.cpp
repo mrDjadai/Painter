@@ -89,7 +89,6 @@ void PencilTool::mouseRelease(const QPoint& pos)
     if (!layer) return;
 
     QImage newImage = layer->image();
-    // Создаем команду рисования
     auto* cmd = new DrawCommand(m_layerManager, activeIndex, m_startImage, newImage);
     m_commandManager->ExecuteCommand(cmd);
 }
@@ -132,7 +131,6 @@ void FillTool::mouseRelease(const QPoint& pos)
     m_commandManager->ExecuteCommand(cmd);
 }
 
-// Простейшая реализация flood fill
 void FillTool::floodFill(QImage& image, const QPoint& start, const QColor& color)
 {
     if (start.x() < 0 || start.y() < 0 || start.x() >= image.width() || start.y() >= image.height())
@@ -207,7 +205,6 @@ void BrushTool::mouseMove(const QPoint& pos)
     QPainter painter(&layer->image());
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    // Рисуем мягкую кисть между m_lastPos и pos
     const int steps = qMax(1, (pos - m_lastPos).manhattanLength() / 4);
     for (int i = 0; i <= steps; ++i) {
         qreal t = i / qreal(steps);
@@ -215,11 +212,9 @@ void BrushTool::mouseMove(const QPoint& pos)
 
         QRadialGradient gradient(point, brushSize / 2.0);
 
-        // Степень экспоненты для затухания (чем больше, тем резче центр)
         const qreal k = 2.0;
 
-        // Создаем градиент с экспоненциальным затуханием
-        const int stepsGradient = 10; // количество контрольных точек
+        const int stepsGradient = 10;
         for (int j = 0; j <= stepsGradient; ++j) {
             qreal g = j / qreal(stepsGradient);
             qreal alpha = qPow(1.0 - g, k) * 255;
@@ -339,7 +334,6 @@ void LineTool::mouseMove(const QPoint& pos)
 
     m_lastPos = pos;
 
-    // Работать на локальной копии
     QImage tmp = m_startImage;
     {
         QPainter p(&tmp);
@@ -348,8 +342,7 @@ void LineTool::mouseMove(const QPoint& pos)
         p.drawLine(m_startPos, m_lastPos);
     }
 
-    // Устанавливаем изображение разом
-    layer->setImage(tmp); // или layer->image() = tmp;
+    layer->setImage(tmp);
     m_layerManager->layersChanged();
 }
 
@@ -371,10 +364,9 @@ void LineTool::mouseRelease(const QPoint& pos)
         p.drawLine(m_startPos, m_lastPos);
     }
 
-    layer->setImage(tmp); // финально применяем
+    layer->setImage(tmp);
     m_layerManager->layersChanged();
 
-    // команда для undo/redo — копии уже корректны
     m_commandManager->ExecuteCommand(new DrawCommand(m_layerManager, idx, m_startImage, tmp));
 }
 
@@ -386,13 +378,10 @@ static QRect normalizedSquare(const QPoint& a, const QPoint& b, bool shift)
     QRect r = QRect(a, b).normalized();
     if (shift) {
         int s = qMin(r.width(), r.height());
-        // сохраняем центр/позицию корректно: делаем квадрат по наименьшей стороне
         if (r.width() > r.height()) {
-            // укоротить по ширине
             if (b.x() < a.x()) r.setLeft(r.right() - s);
             else r.setRight(r.left() + s);
         } else {
-            // укоротить по высоте
             if (b.y() < a.y()) r.setTop(r.bottom() - s);
             else r.setBottom(r.top() + s);
         }
@@ -433,8 +422,8 @@ void RectTool::mouseMove(const QPoint& pos)
     {
         QPainter p(&tmp);
         p.setRenderHint(QPainter::Antialiasing, false);
-        p.setPen(QPen(m_colorManager->primaryColor(), m_toolManager->brushSize(), Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
-        p.setBrush(m_colorManager->secondaryColor());
+        p.setPen(QPen(m_colorManager->secondaryColor(), m_toolManager->brushSize(), Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
+        p.setBrush(m_colorManager->primaryColor());
         QRect rect = normalizedSquare(m_startPos, m_lastPos, QApplication::keyboardModifiers() & Qt::ShiftModifier);
         p.drawRect(rect);
     }
@@ -457,8 +446,8 @@ void RectTool::mouseRelease(const QPoint& pos)
     {
         QPainter p(&tmp);
         p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(QPen(m_colorManager->primaryColor(), m_toolManager->brushSize(), Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
-        p.setBrush(m_colorManager->secondaryColor());
+        p.setPen(QPen(m_colorManager->secondaryColor(), m_toolManager->brushSize(), Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
+        p.setBrush(m_colorManager->primaryColor());
         QRect rect = normalizedSquare(m_startPos, m_lastPos, QApplication::keyboardModifiers() & Qt::ShiftModifier);
         p.drawRect(rect);
     }
@@ -503,8 +492,8 @@ void EllipseTool::mouseMove(const QPoint& pos)
     {
         QPainter p(&tmp);
         p.setRenderHint(QPainter::Antialiasing, false);
-        p.setPen(QPen(m_colorManager->primaryColor(), m_toolManager->brushSize(), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-        p.setBrush(m_colorManager->secondaryColor());
+        p.setPen(QPen(m_colorManager->secondaryColor(), m_toolManager->brushSize(), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        p.setBrush(m_colorManager->primaryColor());
         QRect rect = normalizedSquare(m_startPos, m_lastPos, QApplication::keyboardModifiers() & Qt::ShiftModifier);
         p.drawEllipse(rect);
     }
@@ -527,8 +516,8 @@ void EllipseTool::mouseRelease(const QPoint& pos)
     {
         QPainter p(&tmp);
         p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(QPen(m_colorManager->primaryColor(), m_toolManager->brushSize(), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-        p.setBrush(m_colorManager->secondaryColor());
+        p.setPen(QPen(m_colorManager->secondaryColor(), m_toolManager->brushSize(), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        p.setBrush(m_colorManager->primaryColor());
         QRect rect = normalizedSquare(m_startPos, m_lastPos, QApplication::keyboardModifiers() & Qt::ShiftModifier);
         p.drawEllipse(rect);
     }
@@ -538,4 +527,3 @@ void EllipseTool::mouseRelease(const QPoint& pos)
 
     m_commandManager->ExecuteCommand(new DrawCommand(m_layerManager, idx, m_startImage, tmp));
 }
-

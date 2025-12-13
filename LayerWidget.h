@@ -52,8 +52,8 @@ private slots:
 
     void updateLayerList();
     void onOpacitySliderPressed();
-    void onOpacitySliderValueChanged(int value);   // для мгновенного обновления прозрачности
-    void onOpacitySliderReleased();                // для добавления команды в CommandManager
+    void onOpacitySliderValueChanged(int value);
+    void onOpacitySliderReleased();
     void updateOpacitySlider();
     void onRenameLayerClicked();
     void onMergeWithNextClicked();

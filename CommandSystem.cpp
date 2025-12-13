@@ -1,4 +1,5 @@
 #include "CommandSystem.h"
+#include "Config.h"
 
 void CommandManager::ExecuteCommand(Command* command)
 {
@@ -8,7 +9,7 @@ void CommandManager::ExecuteCommand(Command* command)
 
     redoStack.clear();
 
-    if (undoStack.size() > maxStackSize) {
+    if (undoStack.size() > MAX_STACK_SIZE) {
         undoStack.erase(undoStack.begin());
     }
 }

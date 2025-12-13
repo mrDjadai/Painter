@@ -62,7 +62,7 @@ void StartWindow::onOpenImage()
         this,
         "Открыть изображение",
         QString(),
-        "Изображения (*.png *.jpg *.jpeg *.bmp *.gif)"
+        "Изображения (*.png *.jpg *.jpeg *.bmp)"
         );
 
     if (!filename.isEmpty()) {

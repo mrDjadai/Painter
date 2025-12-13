@@ -11,7 +11,7 @@ class ColorManager : public QObject
     Q_OBJECT
 
 public:
-    explicit ColorManager(QObject* parent = nullptr);
+    ColorManager(QObject* parent = nullptr);
 
     QColor primaryColor() const { return m_primaryColor; }
     void setPrimaryColor(const QColor& color);
@@ -22,13 +22,6 @@ public:
     const QVector<QColor>& colorHistory() const { return m_colorHistory; }
     void addToHistory(const QColor& color);
     void clearHistory();
-
-    void saveColors();
-    void loadColors();
-
-    // Вспомогательные методы
-    QString colorToHex(const QColor& color) const;
-    QColor hexToColor(const QString& hex) const;
 
     void swapColors();
 
@@ -41,7 +34,6 @@ private:
     QColor m_primaryColor;
     QColor m_secondaryColor;
     QVector<QColor> m_colorHistory;
-    static const int MAX_HISTORY_SIZE = 10;
 };
 
 #endif // COLORMANAGER_H

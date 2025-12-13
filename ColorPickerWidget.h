@@ -31,12 +31,10 @@ private:
     void showColorDialog(bool isPrimary);
     ColorManager* m_colorManager;
 
-    // UI элементы для основных цветов
     QPushButton* m_primaryColorButton;
     QPushButton* m_secondaryColorButton;
     QPushButton* m_swapButton;
 
-    // История цветов
     QWidget* m_colorHistoryWidget;
     QGridLayout* m_historyLayout;
     QList<QPushButton*> m_historyButtons;

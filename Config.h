@@ -1,6 +1,15 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+
+//----------------Параметры-----------------------------------
+#define MAX_HISTORY_SIZE 10
+#define PRIMARY_HEX "#000000"
+#define SECONDARY_HEX "#ffffff"
+#define MAX_STACK_SIZE 20
+#define CHECK_COLOR_1 QColor(200,200,200)
+#define CHECK_COLOR_2 QColor(150,150,150)
+
 //----------------Стартовое меню-------------------------------
 #define MIN_CANVAS_SIZE 1
 #define MAX_CANVAS_SIZE 16000
@@ -9,23 +18,20 @@
 
 //----------------Основной интерфейс---------------------------
 
-// Параметры пропорций интерфейса
-#define TOP_PANEL_HEIGHT_PERCENT 10    // Высота верхней панели (% от общей высоты)
-#define CENTRAL_AREA_HEIGHT_PERCENT 90 // Высота центральной области (% от общей высоты)
+#define TOP_PANEL_HEIGHT_PERCENT 10
+#define CENTRAL_AREA_HEIGHT_PERCENT 90
 
-#define CANVAS_WIDTH_PERCENT 85        // Ширина холста (% от ширины центральной области)
-#define LAYERS_PANEL_WIDTH_PERCENT 15  // Ширина панели слоев (% от ширины центральной области)
+#define CANVAS_WIDTH_PERCENT 85
+#define LAYERS_PANEL_WIDTH_PERCENT 15
 
-#define SPLITTER_HANDLE_WIDTH 4        // Ширина разделителя
-#define SPLITTER_COLLAPSIBLE false     // Можно ли сворачивать панели
+#define SPLITTER_HANDLE_WIDTH 4
+#define SPLITTER_COLLAPSIBLE false
 
-// Минимальные размеры (в пикселях)
 #define MIN_TOP_PANEL_HEIGHT 40
 #define MIN_CANVAS_WIDTH 400
 #define MIN_CANVAS_HEIGHT 300
 #define MIN_LAYERS_PANEL_WIDTH 200
 
-// Цвета интерфейса
 #define TOP_PANEL_BACKGROUND "#2b2b2b"
 #define TOP_PANEL_BORDER "#555"
 #define TOP_PANEL_TEXT_COLOR "white"
@@ -39,5 +45,73 @@
 #define CANVAS_BORDER "#666"
 #define SPLITTER_HANDLE_COLOR "#cccccc"
 
+//----------------Панель цветов-------------------------------
+
+#define COLOR_BUTTON_SIZE 36
+#define SWAP_BUTTON_SIZE 28
+
+#define COLOR_BUTTON_BACKGROUND_PRIMARY PRIMARY_HEX
+#define COLOR_BUTTON_BACKGROUND_SECONDARY SECONDARY_HEX
+#define COLOR_BUTTON_TEXT_COLOR "white"
+#define COLOR_SWAP_BUTTON_BACKGROUND "#555555"
+#define COLOR_SWAP_BUTTON_HOVER_BACKGROUND "#666666"
+#define COLOR_SWAP_BUTTON_PRESSED_BACKGROUND "#444444"
+#define COLOR_SWAP_BUTTON_BORDER "#777777"
+#define COLOR_SWAP_BUTTON_HOVER_BORDER "#888888"
+#define COLOR_SWAP_BUTTON_TEXT "white"
+
+#define COLOR_HISTORY_HEIGHT 70
+#define COLOR_HISTORY_SPACING 2
+#define COLOR_HISTORY_MARGIN 2
+#define COLOR_HISTORY_LABEL_HEIGHT 45
+#define COLOR_HISTORY_LABEL_COLOR "white"
+#define COLOR_HISTORY_LABEL_FONT_SIZE 12
+#define COLOR_HISTORY_LABEL_FONT_WEIGHT "bold"
+
+// ---------- LayerWidget ----------
+#define LAYER_WIDGET_MARGIN 5
+#define LAYER_WIDGET_SPACING 5
+
+// Кнопки управления слоями
+#define LAYER_BUTTON_WIDTH 30
+#define LAYER_BUTTON_HEIGHT 25
+
+#define LAYER_BUTTON_ADD_TEXT "+"
+#define LAYER_BUTTON_REMOVE_TEXT "-"
+#define LAYER_BUTTON_DUPLICATE_TEXT "⧉"
+#define LAYER_BUTTON_RENAME_TEXT "✎"
+#define LAYER_BUTTON_MERGE_TEXT "⧉↓"
+
+#define LAYER_BUTTON_TOOLTIP_ADD "Добавить слой"
+#define LAYER_BUTTON_TOOLTIP_REMOVE "Удалить слой"
+#define LAYER_BUTTON_TOOLTIP_DUPLICATE "Дублировать слой"
+#define LAYER_BUTTON_TOOLTIP_RENAME "Переименовать слой"
+#define LAYER_BUTTON_TOOLTIP_MERGE "Объеденить с предыдущим"
+
+// Список слоев
+#define LAYER_LIST_BG_COLOR "#f0f0f0"
+#define LAYER_LIST_BORDER_COLOR "#ccc"
+#define LAYER_LIST_ITEM_BORDER_BOTTOM "#ddd"
+#define LAYER_LIST_ITEM_SELECTED_BG "#d0e3ff"
+#define LAYER_LIST_ITEM_HOVER_BG "#e8f0ff"
+
+// Элементы внутри слоя
+#define LAYER_ITEM_MARGIN 4
+#define LAYER_ITEM_SPACING 4
+
+#define LAYER_ITEM_DRAG_ICON_SIZE 16
+#define LAYER_ITEM_DRAG_ICON_COLOR "#666"
+#define LAYER_ITEM_DRAG_ICON_FONT_SIZE 12
+
+#define LAYER_ITEM_VISIBILITY_SIZE 20
+#define LAYER_ITEM_OPACITY_LABEL_WIDTH 30
+#define LAYER_ITEM_OPACITY_LABEL_FONT_SIZE 10
+#define LAYER_ITEM_OPACITY_LABEL_COLOR "#666"
+
+// Слайдер прозрачности
+#define LAYER_OPACITY_LABEL_WIDTH 50
+#define LAYER_OPACITY_SLIDER_MIN 0
+#define LAYER_OPACITY_SLIDER_MAX 100
+#define LAYER_OPACITY_SLIDER_DEFAULT 100
 
 #endif // CONFIG_H

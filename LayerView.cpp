@@ -1,6 +1,6 @@
 #include "LayerView.h"
 #include <QPainter>
-#include <QDebug>
+#include "Config.h"
 
 LayerView::LayerView(LayerManager* layerManager,
                      ToolManager* toolManager,
@@ -35,10 +35,6 @@ LayerView::LayerView(LayerManager* layerManager,
     }
 }
 
-QSize LayerView::sizeHint() const
-{
-    return QSize(800, 600);
-}
 void LayerView::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
@@ -67,10 +63,9 @@ void LayerView::paintEvent(QPaintEvent* event)
     int offsetX = (width() - imgWidth) / 2;
     int offsetY = (height() - imgHeight) / 2;
 
-    // Рисуем фон "шахматкой"
     const int checkerSize = 10;
-    QBrush checkerBrush(QColor(200,200,200), Qt::SolidPattern);
-    QBrush checkerBrush2(QColor(150,150,150), Qt::SolidPattern);
+    QBrush checkerBrush(CHECK_COLOR_1, Qt::SolidPattern);
+    QBrush checkerBrush2(CHECK_COLOR_2, Qt::SolidPattern);
     for (int y = 0; y < height(); y += checkerSize) {
         for (int x = 0; x < width(); x += checkerSize) {
             QRect rect(x, y, checkerSize, checkerSize);
@@ -81,7 +76,6 @@ void LayerView::paintEvent(QPaintEvent* event)
         }
     }
 
-    // Рисуем слои с учетом прозрачности
     painter.save();
     painter.translate(offsetX, offsetY);
     painter.scale(scale, scale);
@@ -116,11 +110,9 @@ QPoint LayerView::toLayerCoordinates(const QPoint& pos) const
     int offsetX = (widgetSize.width() - imgWidth) / 2;
     int offsetY = (widgetSize.height() - imgHeight) / 2;
 
-    // Сдвигаем координаты мыши относительно изображения и делим на масштаб
     int x = int((pos.x() - offsetX) / scale);
     int y = int((pos.y() - offsetY) / scale);
 
-    // Ограничиваем координаты рамками слоя
     x = qBound(0, x, canvasSize.width() - 1);
     y = qBound(0, y, canvasSize.height() - 1);
 
@@ -185,12 +177,12 @@ void LayerView::mouseReleaseEvent(QMouseEvent* event)
         m_currentTool->mouseRelease(layerPos);
     }
 }
+
 QImage LayerView::getCombinedImage() const
 {
     if (!m_layerManager)
         return QImage();
 
-    // Определяем размер холста по первому слою
     int width = 0;
     int height = 0;
     if (m_layerManager->layerCount() > 0) {
@@ -203,12 +195,11 @@ QImage LayerView::getCombinedImage() const
         return QImage();
 
     QImage combined(width, height, QImage::Format_ARGB32);
-    combined.fill(Qt::white); // Фон белый
+
 
     QPainter painter(&combined);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    // Рендерим все слои
     for (int i = 0; i < m_layerManager->layerCount(); ++i) {
         const Layer* layer = m_layerManager->layerAt(i);
         if (!layer) continue;

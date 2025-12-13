@@ -62,7 +62,7 @@ void LayerManager::duplicateLayer(int index)
 
     const Layer* sourceLayer = m_layers[index].get();
     auto newLayer = std::make_unique<Layer>(sourceLayer->image().size(),
-                                            sourceLayer->name() + " Copy");
+                                            sourceLayer->name() + " Копия");
 
     newLayer->setImage(sourceLayer->image().copy());
     newLayer->setOpacity(sourceLayer->opacity());
@@ -142,7 +142,6 @@ QImage LayerManager::compositeImage(const QSize& size) const
 
 void LayerManager::renderLayers(QPainter& painter, const QRect& destRect) const
 {
-    // Рендерим снизу вверх (от первого к последнему)
     for (const auto& layer : m_layers) {
         layer->paint(painter, destRect);
     }
@@ -160,13 +159,11 @@ bool LayerManager::saveProject(const QString& filename) const
     // Заголовок
     stream << QString("LAYER_PROJECT") << static_cast<qint32>(m_layers.size());
 
-    // Сохраняем каждый слой
     for (const auto& layer : m_layers) {
         stream << layer->name()
         << layer->isVisible()
         << static_cast<qreal>(layer->opacity());
 
-        // Сохраняем изображение
         QByteArray imageData;
         QBuffer buffer(&imageData);
         buffer.open(QIODevice::WriteOnly);
@@ -185,7 +182,6 @@ void LayerManager::insertLayer(int index, std::unique_ptr<Layer> layer)
 
     m_layers.insert(m_layers.begin() + index, std::move(layer));
 
-    // Обновляем активный слой если нужно
     if (!m_activeLayer) {
         setActiveLayer(0);
     }
@@ -207,7 +203,6 @@ bool LayerManager::loadProject(const QString& filename)
     QDataStream stream(&file);
     stream.setVersion(QDataStream::Qt_5_15);
 
-    // Проверяем заголовок
     QString header;
     qint32 layerCount;
     stream >> header >> layerCount;
@@ -215,10 +210,8 @@ bool LayerManager::loadProject(const QString& filename)
     if (header != "LAYER_PROJECT" || layerCount < 0)
         return false;
 
-    // Очищаем текущие слои
     ClearLayers();
 
-    // Загружаем слои
     for (int i = 0; i < layerCount; ++i) {
         QString name;
         bool visible;
@@ -230,7 +223,6 @@ bool LayerManager::loadProject(const QString& filename)
         if (stream.status() != QDataStream::Ok)
             return false;
 
-        // Создаем изображение из данных
         QImage image;
         if (!image.loadFromData(imageData, "PNG"))
             continue;

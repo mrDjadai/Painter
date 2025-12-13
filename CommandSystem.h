@@ -17,7 +17,6 @@ class CommandManager
 private:
     std::vector<Command*> undoStack;
     std::vector<Command*> redoStack;
-    size_t maxStackSize = 20;
 
 public:
     void ExecuteCommand(Command* command);

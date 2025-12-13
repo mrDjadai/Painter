@@ -10,7 +10,8 @@
 #include "ColorManager.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
+namespace Ui
+{
 class MainWindow;
 }
 QT_END_NAMESPACE
@@ -34,10 +35,6 @@ private slots:
     void HandleUndo();
     void HandleRedo();
     void onLayersChanged();
-    void onToolChanged(ToolType tool);
-    void onBrushSizeChanged(int size);
-    void onPrimaryColorChanged(const QColor& color);
-    void onSecondaryColorChanged(const QColor& color);
     void saveAs();
 
 private:

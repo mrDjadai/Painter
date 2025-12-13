@@ -24,15 +24,13 @@ private:
     QSize m_size;
     QString m_name;
 
-    int m_index;  // индекс, куда был добавлен слой
+    int m_index;
 
-    // сохранённые данные
     QImage m_image;
     float m_opacity;
     bool  m_visibility;
 };
 
-// Команда удаления слоя
 class DeleteLayerCommand : public Command
 {
 public:
@@ -50,7 +48,6 @@ private:
     bool wasActive;
 };
 
-// Команда перемещения слоя
 class MoveLayerCommand : public Command
 {
 public:
@@ -66,7 +63,6 @@ private:
     int toIndex;
 };
 
-// Команда изменения видимости слоя
 class ToggleLayerVisibilityCommand : public Command
 {
 public:
@@ -82,7 +78,6 @@ private:
     bool oldVisibility;
 };
 
-// Команда изменения непрозрачности слоя
 class ChangeLayerOpacityCommand : public Command
 {
 public:
@@ -109,10 +104,10 @@ public:
     void Redo() override;
 
 private:
-    QPointer<LayerManager> m_manager;              // Менеджер слоев
-    int m_sourceIndex;                             // Индекс исходного слоя
-    std::unique_ptr<Layer> m_duplicatedLayer;     // Копия дублированного слоя
-    int m_duplicateIndex;                          // Индекс, куда добавлен слой
+    QPointer<LayerManager> m_manager;
+    int m_sourceIndex;
+    std::unique_ptr<Layer> m_duplicatedLayer;
+    int m_duplicateIndex;
 };
 
 class DrawCommand : public Command
@@ -131,9 +126,6 @@ private:
     QImage m_afterImage;
 };
 
-// -----------------------------
-// RenameLayerCommand
-// -----------------------------
 class RenameLayerCommand : public Command
 {
 public:
@@ -152,9 +144,6 @@ private:
 };
 
 
-// -----------------------------
-// MergeLayerWithNextCommand
-// -----------------------------
 class MergeLayerWithNextCommand : public Command
 {
 public:
@@ -166,9 +155,8 @@ public:
 
 private:
     LayerManager* m_manager;
-    int m_topIndex;   // Верхний слой, который накладываем
+    int m_topIndex;
 
-    // Бэкапы
     Layer m_topBackup;
     Layer m_bottomBackup;
 };

@@ -5,11 +5,11 @@
 #include <QPoint>
 #include <QImage>
 #include "toolmanager.h"
+
 class LayerManager;
 class CommandManager;
 class ColorManager;
 
-// Базовый интерфейс инструмента (по желанию)
 class Tool : public QObject
 {
     Q_OBJECT
@@ -22,7 +22,6 @@ public:
     virtual void mouseRelease(const QPoint& pos) = 0;
 };
 
-// Пипетка — сразу меняет текущий цвет
 class EyedropperTool : public Tool
 {
     Q_OBJECT
@@ -38,7 +37,6 @@ private:
     ColorManager* m_colorManager;
 };
 
-// Карандаш — создаёт команду рисования для undo/redo
 class PencilTool : public Tool
 {
     Q_OBJECT
@@ -105,7 +103,6 @@ private:
     QImage m_startImage;
 };
 
-// Заливка — создаёт команду для undo/redo
 class FillTool : public Tool
 {
     Q_OBJECT

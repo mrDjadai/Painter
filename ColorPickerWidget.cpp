@@ -6,10 +6,10 @@
 #include <QLabel>
 #include <QColorDialog>
 #include <QGridLayout>
-#include <QDebug>
 #include <QRegularExpression>
 #include <QKeyEvent>
 #include <QApplication>
+#include "Config.h"
 
 ColorPickerWidget::ColorPickerWidget(ColorManager* colorManager, QWidget* parent)
     : QWidget(parent)
@@ -40,69 +40,78 @@ void ColorPickerWidget::setupUI()
     mainLayout->setSpacing(30);
     mainLayout->setContentsMargins(8, 4, 8, 8);
 
-    // ===== ПЕРВАЯ СТРОКА:ОСНОВНЫЕ ЦВЕТА =====
     QHBoxLayout* topRowLayout = new QHBoxLayout();
     topRowLayout->setSpacing(15);
 
-    // ===== ПРАВАЯ ЧАСТЬ: ОСНОВНЫЕ ЦВЕТА =====
     QHBoxLayout* colorsLayout = new QHBoxLayout();
     colorsLayout->setSpacing(15);
 
-    // Первичный цвет
     QVBoxLayout* primaryLayout = new QVBoxLayout();
     primaryLayout->setSpacing(20);
     primaryLayout->setContentsMargins(0, 0, 0, 0);
 
     QLabel* primaryLabel = new QLabel("Первичный");
     primaryLabel->setAlignment(Qt::AlignCenter);
-    primaryLabel->setFixedHeight(16);
-    primaryLabel->setStyleSheet("color: white; font-weight: bold; font-size: 12px;");
+    primaryLabel->setFixedHeight(COLOR_HISTORY_LABEL_HEIGHT / 3);
+    primaryLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: %2px;")
+                                    .arg(COLOR_BUTTON_TEXT_COLOR)
+                                    .arg(COLOR_HISTORY_LABEL_FONT_SIZE));
     primaryLayout->addWidget(primaryLabel);
 
     m_primaryColorButton = new QPushButton();
-    m_primaryColorButton->setFixedSize(36, 36);
+    m_primaryColorButton->setFixedSize(COLOR_BUTTON_SIZE, COLOR_BUTTON_SIZE);
     m_primaryColorButton->setCursor(Qt::PointingHandCursor);
+    m_primaryColorButton->setStyleSheet(QString("background-color: %1; border: 1px solid #777777;")
+                                            .arg(COLOR_BUTTON_BACKGROUND_PRIMARY));
     primaryLayout->addWidget(m_primaryColorButton, 0, Qt::AlignHCenter);
 
     colorsLayout->addLayout(primaryLayout);
 
-    // Кнопка обмена цветами
     m_swapButton = new QPushButton("↔");
-    m_swapButton->setFixedSize(28, 28);
+    m_swapButton->setFixedSize(SWAP_BUTTON_SIZE, SWAP_BUTTON_SIZE);
     m_swapButton->setCursor(Qt::PointingHandCursor);
-    m_swapButton->setStyleSheet(
-        "QPushButton {"
-        "   background-color: #555555;"
-        "   color: white;"
-        "   border: 1px solid #777777;"
-        "   border-radius: 5px;"
-        "   font-size: 13px;"
-        "   font-weight: bold;"
-        "}"
-        "QPushButton:hover {"
-        "   background-color: #666666;"
-        "   border: 1px solid #888888;"
-        "}"
-        "QPushButton:pressed {"
-        "   background-color: #444444;"
-        "}"
-        );
+    m_swapButton->setStyleSheet(QString(
+                                    "QPushButton {"
+                                    "   background-color: %1;"
+                                    "   color: %2;"
+                                    "   border: 1px solid %3;"
+                                    "   border-radius: 5px;"
+                                    "   font-size: 13px;"
+                                    "   font-weight: bold;"
+                                    "}"
+                                    "QPushButton:hover {"
+                                    "   background-color: %4;"
+                                    "   border: 1px solid %5;"
+                                    "}"
+                                    "QPushButton:pressed {"
+                                    "   background-color: %6;"
+                                    "}")
+                                    .arg(COLOR_SWAP_BUTTON_BACKGROUND)
+                                    .arg(COLOR_SWAP_BUTTON_TEXT)
+                                    .arg(COLOR_SWAP_BUTTON_BORDER)
+                                    .arg(COLOR_SWAP_BUTTON_HOVER_BACKGROUND)
+                                    .arg(COLOR_SWAP_BUTTON_HOVER_BORDER)
+                                    .arg(COLOR_SWAP_BUTTON_PRESSED_BACKGROUND)
+                                );
     colorsLayout->addWidget(m_swapButton, 0, Qt::AlignVCenter);
 
-    // Вторичный цвет
     QVBoxLayout* secondaryLayout = new QVBoxLayout();
     secondaryLayout->setSpacing(20);
     secondaryLayout->setContentsMargins(0, 0, 0, 0);
 
     QLabel* secondaryLabel = new QLabel("Вторичный");
     secondaryLabel->setAlignment(Qt::AlignCenter);
-    secondaryLabel->setFixedHeight(16);
-    secondaryLabel->setStyleSheet("color: white; font-weight: bold; font-size: 12px;");
+    secondaryLabel->setFixedHeight(COLOR_HISTORY_LABEL_HEIGHT / 3);
+    secondaryLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: %2px;")
+                                      .arg(COLOR_BUTTON_TEXT_COLOR)
+                                      .arg(COLOR_HISTORY_LABEL_FONT_SIZE));
     secondaryLayout->addWidget(secondaryLabel);
 
     m_secondaryColorButton = new QPushButton();
-    m_secondaryColorButton->setFixedSize(36, 36);
+    m_secondaryColorButton->setFixedSize(COLOR_BUTTON_SIZE, COLOR_BUTTON_SIZE);
     m_secondaryColorButton->setCursor(Qt::PointingHandCursor);
+    m_secondaryColorButton->setStyleSheet(QString("background-color: %1; border: 1px solid #777777;")
+                                              .arg(COLOR_BUTTON_BACKGROUND_SECONDARY));
     secondaryLayout->addWidget(m_secondaryColorButton, 0, Qt::AlignHCenter);
 
     colorsLayout->addLayout(secondaryLayout);
@@ -112,30 +121,29 @@ void ColorPickerWidget::setupUI()
 
     mainLayout->addLayout(topRowLayout);
 
-
-    // ===== ВТОРАЯ СТРОКА: ИСТОРИЯ ЦВЕТОВ =====
     QLabel* historyLabel = new QLabel("История цветов");
-    historyLabel->setFixedHeight(45);
-    historyLabel->setStyleSheet("color: white; font-weight: bold; font-size: 12px;");
+    historyLabel->setFixedHeight(COLOR_HISTORY_LABEL_HEIGHT);
+    historyLabel->setStyleSheet(QString("color: %1; font-weight: %2; font-size: %3px;")
+                                    .arg(COLOR_HISTORY_LABEL_COLOR)
+                                    .arg(COLOR_HISTORY_LABEL_FONT_WEIGHT)
+                                    .arg(COLOR_HISTORY_LABEL_FONT_SIZE));
     mainLayout->addWidget(historyLabel);
 
-    // Контейнер для истории цветов
     m_colorHistoryWidget = new QWidget();
-    m_colorHistoryWidget->setFixedHeight(70);
+    m_colorHistoryWidget->setFixedHeight(COLOR_HISTORY_HEIGHT);
     m_colorHistoryWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-    // Создаем grid layout для истории
     m_historyLayout = new QGridLayout(m_colorHistoryWidget);
-    m_historyLayout->setSpacing(2);
-    m_historyLayout->setContentsMargins(2, 2, 2, 2);
+    m_historyLayout->setSpacing(COLOR_HISTORY_SPACING);
+    m_historyLayout->setContentsMargins(COLOR_HISTORY_MARGIN, COLOR_HISTORY_MARGIN,
+                                        COLOR_HISTORY_MARGIN, COLOR_HISTORY_MARGIN);
     m_historyLayout->setAlignment(Qt::AlignTop);
-
 
     mainLayout->addWidget(m_colorHistoryWidget);
 }
+
 void ColorPickerWidget::setupConnections()
 {
-    // Основные цвета
     connect(m_primaryColorButton, &QPushButton::clicked,
             this, &ColorPickerWidget::onPrimaryColorClicked);
 
@@ -150,7 +158,6 @@ void ColorPickerWidget::updateColorDisplays()
 {
     if (!m_colorManager) return;
 
-    // Обновляем основные цвета
     QColor primaryColor = m_colorManager->primaryColor();
     QColor secondaryColor = m_colorManager->secondaryColor();
 
@@ -184,8 +191,6 @@ void ColorPickerWidget::updateColorDisplays()
     m_secondaryColorButton->setToolTip(QString("Click to change secondary color\nCurrent: %1")
                                            .arg(secondaryColor.name()));
 
-    // Обновляем историю цветов
-    // Очищаем старые кнопки
     for (QPushButton* button : m_historyButtons) {
         m_historyLayout->removeWidget(button);
         delete button;
@@ -199,7 +204,7 @@ void ColorPickerWidget::updateColorDisplays()
         int maxColors = qMin(16, history.size());
         for (int i = 0; i < maxColors; ++i) {
             QPushButton* colorButton = new QPushButton();
-            colorButton->setFixedSize(12, 12); // Увеличили размер кнопок истории
+            colorButton->setFixedSize(12, 12);
             colorButton->setCursor(Qt::PointingHandCursor);
 
             QString buttonStyle = QString(
@@ -216,10 +221,8 @@ void ColorPickerWidget::updateColorDisplays()
             colorButton->setStyleSheet(buttonStyle);
             colorButton->setToolTip(history[i].name());
 
-            // Сохраняем индекс цвета
             colorButton->setProperty("colorIndex", i);
 
-            // Подключаем сигнал
             connect(colorButton, &QPushButton::clicked,
                     this, &ColorPickerWidget::onHistoryColorClicked);
 
@@ -228,7 +231,6 @@ void ColorPickerWidget::updateColorDisplays()
         }
     }
 
-    // Обновляем layout
     m_colorHistoryWidget->updateGeometry();
 }
 

@@ -9,7 +9,7 @@ class ToolManager : public QObject
     Q_OBJECT
 
 public:
-    explicit ToolManager(QObject* parent = nullptr);
+    ToolManager(QObject* parent = nullptr);
 
     ToolType currentTool() const { return m_currentTool; }
     void setCurrentTool(ToolType tool);
@@ -23,8 +23,6 @@ public:
     int tolerance() const{ return m_tolerance; }
     void setTolerance(int);
 
-
-    QString toolName(ToolType tool) const;
 
 signals:
     void toolChanged(ToolType tool);

@@ -8,7 +8,7 @@
 class Layer
 {
 public:
-    explicit Layer(const QSize& size, const QString& name = "Layer");
+    Layer(const QSize& size, const QString& name = "Layer");
     ~Layer() = default;
 
     void setVisible(bool visible) { m_visible = visible; }
